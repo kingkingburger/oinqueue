@@ -1,4 +1,9 @@
+import { Player } from "@/(main)/(player)/page";
+
 export default function Home() {
+	const gameName = "초코산";
+	const tagName = "KR1";
+
 	// 더미 데이터 (실제 애플리케이션에서는 API 호출 등으로 데이터를 가져옵니다)
 	const productComboData = [20, 25, 30, 20, 5];
 	const ratioData = [15, 20, 25, 10, 30];
@@ -36,6 +41,7 @@ export default function Home() {
 		<div className="min-h-screen bg-gray-100 p-6 font-sans">
 			{/* Main Content Grid */}
 			<div className="mt-4 grid grid-cols-12 gap-4">
+				<Player gameName={gameName} tagName={tagName} />
 				{/* Top row - 5 large cards */}
 				<div className="col-span-12 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
 					<LargePlaceholderCard className="h-48" />
