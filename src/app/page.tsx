@@ -1,4 +1,5 @@
 import { Player } from "@/(main)/(player)/page";
+import LargePlaceholderCard from "@/component/largePlaceholderCard";
 
 export default function Home() {
 	const gameName = "초코산";
@@ -30,25 +31,14 @@ export default function Home() {
 		</div>
 	);
 
-	// LargePlaceholderCard 컴포넌트 내부 코드
-	const LargePlaceholderCard = ({ className = "" }: { className?: string }) => (
-		<div className={`bg-gray-300 rounded-lg ${className}`}>
-			{/* 내용 없음, 플레이스홀더 역할 */}
-		</div>
-	);
-
 	return (
 		<div className="min-h-screen bg-gray-100 p-6 font-sans">
 			{/* Main Content Grid */}
 			<div className="mt-4 grid grid-cols-12 gap-4">
-				<Player gameName={gameName} tagName={tagName} />
 				{/* Top row - 5 large cards */}
-				<div className="col-span-12 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-					<LargePlaceholderCard className="h-48" />
-					<LargePlaceholderCard className="h-48" />
-					<LargePlaceholderCard className="h-48" />
-					<LargePlaceholderCard className="h-48" />
-					<LargePlaceholderCard className="h-48" />
+				<div className="mx-2 my-2">최근전적</div>
+				<div className="col-span-12 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 bg-gray-300 rounded-lg h-128">
+					<Player gameName={gameName} tagName={tagName} />
 				</div>
 
 				{/* Middle row - 3 sections: 상품별 추천 조합, 비율, 비어있는 큰 카드 */}
