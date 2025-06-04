@@ -6,7 +6,10 @@ interface PlayerResult {
 	puuid: string;
 }
 
-export const getRiotPuuid = async (gameName: string, tagName: string) => {
+export const getRiotSummonerInfo = async (
+	gameName: string,
+	tagName: string,
+) => {
 	const riotEngine = useRiotApiEngine();
 	const result = await riotEngine
 		.get<PlayerResult>(
@@ -14,5 +17,5 @@ export const getRiotPuuid = async (gameName: string, tagName: string) => {
 		)
 		.json();
 
-	return result.puuid;
+	return result;
 };
