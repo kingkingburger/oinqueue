@@ -19,7 +19,7 @@ export const Player: React.FC<PlayerProps> = async ({ gameName, tagName }) => {
 
 	for (const participant of matchInfo.metadata.participants) {
 		const summonerInfo = await getRiotSummonerInfoByPuuid(participant);
-		console.log("summonerInfo = ", summonerInfo.gameName);
+		// console.log("summonerInfo = ", summonerInfo.gameName);
 	}
 
 	return <div>player layout</div>;

@@ -1,5 +1,8 @@
 import { Player } from "@/(main)/(player)/page";
+import { DottedSeparator } from "@/component/dotted-separator";
 import LargePlaceholderCard from "@/component/largePlaceholderCard";
+import { PlayHistory } from "@/component/playHistory";
+import type React from "react";
 
 export default function Home() {
 	const gameName = "초코산";
@@ -37,8 +40,25 @@ export default function Home() {
 			<div className="mt-4 grid grid-cols-12 gap-4">
 				{/* Top row - 5 large cards */}
 				<div className="mx-2 my-2">최근전적</div>
-				<div className="col-span-12 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 bg-gray-300 rounded-lg h-128">
+
+				<div className="col-span-12 bg-gray-300 rounded-lg h-128">
 					<Player gameName={gameName} tagName={tagName} />
+
+					<header className="px-4 mb-6">
+						<h1 className="text-2xl font-semibold text-gray-800">매치 기록</h1>
+						<DottedSeparator className="bg-black" direction="vertical" />
+						<p className="text-sm text-gray-500">
+							최근 매치 목록을 확인하세요.
+						</p>
+					</header>
+					<DottedSeparator className="bg-black" direction="vertical" />
+					<div className="flex w-full items-stretch justify-between px-4">
+						<PlayHistory />
+						{/*<DottedSeparator className="bg-black" direction="vertical" />*/}
+						<PlayHistory />
+						{/*<DottedSeparator className="bg-blue-300" direction="vertical" />*/}
+						<PlayHistory />
+					</div>
 				</div>
 
 				{/* Middle row - 3 sections: 상품별 추천 조합, 비율, 비어있는 큰 카드 */}
@@ -55,7 +75,6 @@ export default function Home() {
 
 					{/* 비어있는 큰 카드 */}
 					<div className="col-span-1 md:col-span-2 lg:col-span-1">
-						{" "}
 						{/* md:col-span-2 to span across both if only 2 cols */}
 						<LargePlaceholderCard className="h-full min-h-[160px] md:min-h-0" />{" "}
 						{/* height to match card sections */}
