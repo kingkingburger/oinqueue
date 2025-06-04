@@ -19,3 +19,12 @@ export const getRiotSummonerInfo = async (
 
 	return result;
 };
+
+export const getRiotSummonerInfoByPuuid = async (puuid: string) => {
+	const riotEngine = useRiotApiEngine();
+	const result = await riotEngine
+		.get<PlayerResult>(`riot/account/v1/accounts/by-puuid/${puuid}`)
+		.json();
+
+	return result;
+};

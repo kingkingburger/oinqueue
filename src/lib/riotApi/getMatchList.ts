@@ -14,7 +14,7 @@ export const getMatchList = async (puuid: string): Promise<MatchIds> => {
 			{
 				searchParams: {
 					start: "0",
-					count: "20",
+					count: "10",
 					type: "ranked",
 				},
 			},
