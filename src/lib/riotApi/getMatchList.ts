@@ -3,7 +3,7 @@ import { useRiotApiEngine } from "@/lib/utils";
 // Riot API가 반환하는 값이 match ID 목록(문자열 배열)이므로 타입을 지정
 type MatchIds = string[];
 
-export const getMatchResult = async (puuid: string): Promise<MatchIds> => {
+export const getMatchList = async (puuid: string): Promise<MatchIds> => {
 	const riotEngine = useRiotApiEngine();
 
 	// 1) ':puuid' 자리에 실제 puuid를 넣고, encodeURIComponent로 안전하게 인코딩

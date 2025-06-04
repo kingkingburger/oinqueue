@@ -1,5 +1,7 @@
-import { getMatchResult } from "@/lib/getMatchList";
-import { getRiotSummonerInfo } from "@/lib/getRiotSummonerInfo";
+import { metadata } from "@/app/layout";
+import { getMatchInfo } from "@/lib/riotApi/getMatchInfo";
+import { getMatchList } from "@/lib/riotApi/getMatchList";
+import { getRiotSummonerInfo } from "@/lib/riotApi/getRiotSummonerInfo";
 import type React from "react";
 
 interface PlayerProps {
@@ -9,8 +11,13 @@ interface PlayerProps {
 
 export const Player: React.FC<PlayerProps> = async ({ gameName, tagName }) => {
 	const summonerInfo = await getRiotSummonerInfo(gameName, tagName);
-	const matchIds = await getMatchResult(summonerInfo.puuid);
+	const matchIds = await getMatchList(summonerInfo.puuid);
+	const matchInfo = await getMatchInfo(matchIds[0]);
 
-	console.log("matchIds = ", matchIds);
+	for (const participant of matchInfo.metadata.participants) {
+		const summonerInfo = await getRiotSummonerInfo(participant);
+	}
+
+	console.log("matchInfo = ", matchInfo);
 	return <div>player layout</div>;
 };
