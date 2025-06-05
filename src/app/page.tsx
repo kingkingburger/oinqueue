@@ -1,104 +1,148 @@
+// page.tsx
 import { Player } from "@/(main)/(player)/page";
-import { DottedSeparator } from "@/component/dotted-separator";
-import LargePlaceholderCard from "@/component/largePlaceholderCard";
-import { PlayHistory } from "@/component/playHistory";
+import type React from "react";
+
 import { getMatchInfo } from "@/lib/riotApi/getMatchInfo";
 import { getMatchList } from "@/lib/riotApi/getMatchList";
 import {
 	getRiotSummonerInfo,
 	getRiotSummonerInfoByPuuid,
 } from "@/lib/riotApi/getRiotSummonerInfo";
-import type React from "react";
+
+import CardSection from "@/component/cardSection";
+import ChampionSummary from "@/component/championSummary";
+import LargePlaceholderCard from "@/component/largePlaceholderCard";
+import RecentMatches from "@/component/recentMatches";
+import { mainGameName, mainNames, mainTagName } from "@/constant/basic";
 
 export default async function Home() {
-	const gameName = "초코산";
-	const tagName = "KR1";
+	// ───────────────────────────────────────────────────────────
+	// 데이터 Fetch & 가공 (모두 선언형으로만 표현)
+	// ───────────────────────────────────────────────────────────
 
-	// ────────────────────────────────────────────────────────────────────────────────
-	// 1) 소환사 기본 정보 가져오기
-	const summonerInfo = await getRiotSummonerInfo(gameName, tagName);
+	// 1) 소환사 puuid 조회
+	const { puuid } = await getRiotSummonerInfo(mainGameName, mainTagName);
 
-	// 2) 매치 ID 리스트 가져오기
-	const matchIds = await getMatchList(summonerInfo.puuid);
+	// 2) 매치 ID 리스트(최대 20개 → matchCount 10)
+	const allMatchIds = await getMatchList({ puuid, count: 10 });
+	const top10MatchIds = allMatchIds.slice(0, 20);
 
-	// 3) 1, 2, 3번째 매치 정보를 병렬로 요청
-	//    matchIds[0], matchIds[1], matchIds[2] 순서로 가져오기
-	const matchInfos = await Promise.all([
-		getMatchInfo(matchIds[0]),
-		getMatchInfo(matchIds[1]),
-		getMatchInfo(matchIds[2]),
-	]);
+	// 3) 10개 matchInfo 병렬 요청
+	const matchInfos10 = await Promise.all(
+		top10MatchIds.map((id) => getMatchInfo(id)),
+	);
 
-	// 4) 각 매치별 participants 배열만 뽑아서 필요한 필드로 매핑
-	//    최종적으로 길이가 3인 배열이 만들어짐
-	const participantsList = matchInfos.map((matchInfo) =>
-		matchInfo.info.participants.map((p) => ({
-			summonerName: p.summonerName,
+	type ChampionStats = { wins: number; total: number };
+
+	// 4) “특정 소환사 대상 목록” 필터 → 챔피언별 통계 accumulate
+	type PerSummonerStats = Record<string, Record<string, ChampionStats>>;
+
+	const perSummonerStats: PerSummonerStats = matchInfos10
+		.flatMap((mi) => mi.info.participants)
+		.filter((p) => mainNames.some((name) => p.riotIdGameName.includes(name)))
+		.reduce<PerSummonerStats>((acc, p) => {
+			const summoner = p.riotIdGameName;
+			const champ = p.championName;
+			const won = p.win ? 1 : 0;
+
+			const prevStats = acc[summoner] ?? {};
+			const prevChampionStats = prevStats[champ] ?? { wins: 0, total: 0 };
+
+			return {
+				...acc,
+				[summoner]: {
+					...prevStats,
+					[champ]: {
+						wins: prevChampionStats.wins + won,
+						total: prevChampionStats.total + 1,
+					},
+				},
+			};
+		}, {});
+
+	type BestPerSummoner = Record<
+		string,
+		{ champion: string; winRate: number; stats: ChampionStats }
+	>;
+
+	const bestPerSummoner: BestPerSummoner = Object.entries(
+		perSummonerStats,
+	).reduce((acc, [summoner, statsObj]) => {
+		const bestEntry = Object.entries(statsObj).reduce(
+			(best, [champName, champStats]) => {
+				const { wins, total } = champStats;
+				const rate = total > 0 ? wins / total : 0;
+				if (rate > best.winRate) {
+					return { champion: champName, winRate: rate, stats: champStats };
+				}
+				return best;
+			},
+			{ champion: "", winRate: -1, stats: { wins: 0, total: 0 } },
+		);
+		return { ...acc, [summoner]: bestEntry };
+	}, {} as BestPerSummoner);
+
+	console.log("bestPerSummoner = ", bestPerSummoner);
+
+	// 5) 최근 3개 매치 참가자 목록 준비
+	const participantsList = matchInfos10.slice(0, 3).map((mi) =>
+		mi.info.participants.map((p) => ({
+			riotIdGameName: p.riotIdGameName,
+			riotIdTagline: p.riotIdTagline,
 			championName: p.championName,
 			kills: p.kills,
 			deaths: p.deaths,
 			assists: p.assists,
+			win: p.win,
 		})),
 	);
+	// participantsList: Participant[][] (길이 3, 각각 10명씩)
 
-	// 더미 데이터 (기존 UI 구성 그대로 유지)
+	// 6) 기존 카드용 더미 데이터
 	const productComboData = [20, 25, 30, 20, 5];
 	const ratioData = [15, 20, 25, 10, 30];
 	const recommendedComboData = [10, 15, 20, 25, 30];
 	const bottomCardSectionData = [22, 28, 35, 15, 0];
 	const bottomRecommendedComboData = [10, 15, 20, 25, 30];
 
-	const SmallDataDisplay = ({ percentage }: { percentage: number }) => (
-		<div className="bg-lime-500 h-16 w-16 md:h-20 md:w-20 flex items-center justify-center rounded-md text-white font-bold text-sm">
-			{percentage}%
-		</div>
-	);
-	const CardSection = ({ title, data }: { title: string; data: number[] }) => (
-		<div className="bg-gray-300 p-4 rounded-lg flex flex-col">
-			<h3 className="text-gray-700 text-md font-semibold mb-4">{title}</h3>
-			<div className="grid grid-cols-5 gap-2 justify-items-center">
-				{data.map((percentage, index) => (
-					<SmallDataDisplay key={index} percentage={percentage} />
-				))}
-			</div>
-		</div>
-	);
+	// ───────────────────────────────────────────────────────────
+	// JSX: UI 컴포넌트 조합 (전부 선언형)
+	// ───────────────────────────────────────────────────────────
 
 	return (
 		<div className="min-h-screen bg-gray-100 p-6 font-sans">
-			{/* Main Content Grid */}
 			<div className="mt-4 grid grid-cols-12 gap-4">
-				{/* Top row - 제목 */}
+				{/* Top row: 타이틀 */}
 				<div className="mx-2 my-2">최근전적</div>
 
-				{/* “매치 기록” 섹션 */}
-				<div className="col-span-12 bg-gray-300 rounded-lg h-auto">
-					<header className="px-4 mb-6 flex items-center gap-x-2">
-						<h1 className="text-2xl font-semibold text-gray-800">매치 기록</h1>
-						<DottedSeparator className="bg-black" direction="vertical" />
-						<p className="text-sm text-gray-500">최근 매치 를 확인하세요.</p>
-					</header>
+				{/* 3-2) 최근 3개 매치 기록 */}
+				<RecentMatches
+					participantsList={participantsList}
+					matchIds={top10MatchIds}
+				/>
 
-					<div className="px-4">
-						<div className="flex w-full items-stretch justify-between px-4">
-							{participantsList.map((participants, idx) => (
-								<div key={idx} className="min-w-[300px]">
-									{/* 매치 번호 헤더 */}
-									<h2 className="text-xl font-semibold text-gray-700 mb-2">
-										매치 {idx + 1}
-									</h2>
-									<PlayHistory participants={participants} />
-								</div>
-							))}
+				{/* 3-3) Middle row: 카드 섹션들 */}
+				<div className="col-span-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+					{/* 3-1) 소환사별 최고 승률 챔피언 요약 */}
+					<div className="col-span-12 overflow-x-auto">
+						<h1 className="text-2xl font-semibold text-gray-800 mb-2">
+							최근 20게임 중 승률이 가장 높은 챔피언
+						</h1>
+						<div className="flex flex-row gap-x-4">
+							{Object.entries(bestPerSummoner).map(
+								([summoner, { champion, winRate }]) => (
+									<div key={summoner} className="flex-shrink-0 w-64">
+										<ChampionSummary
+											summonerName={summoner}
+											bestChampion={champion}
+											bestWinRate={winRate}
+										/>
+									</div>
+								),
+							)}
 						</div>
 					</div>
-				</div>
 
-				{/* Middle row - 기존 카드 섹션 */}
-				<div className="col-span-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-					<div className="col-span-1 md:col-span-1 lg:col-span-1">
-						<CardSection title="상품별 추천 조합" data={productComboData} />
-					</div>
 					<div className="col-span-1 md:col-span-1 lg:col-span-1">
 						<CardSection title="비율" data={ratioData} />
 					</div>
@@ -107,7 +151,7 @@ export default async function Home() {
 					</div>
 				</div>
 
-				{/* Bottom row - 기존 카드 섹션 */}
+				{/* 3-4) Bottom row: 카드 섹션들 */}
 				<div className="col-span-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
 					<div className="col-span-1 md:col-span-1">
 						<CardSection
