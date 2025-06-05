@@ -11,20 +11,16 @@ export const getRiotSummonerInfo = async (
 	tagName: string,
 ) => {
 	const riotEngine = useRiotApiEngine();
-	const result = await riotEngine
+	return await riotEngine
 		.get<PlayerResult>(
 			`riot/account/v1/accounts/by-riot-id/${encodeURIComponent(gameName)}/${tagName}`,
 		)
 		.json();
-
-	return result;
 };
 
 export const getRiotSummonerInfoByPuuid = async (puuid: string) => {
 	const riotEngine = useRiotApiEngine();
-	const result = await riotEngine
+	return await riotEngine
 		.get<PlayerResult>(`riot/account/v1/accounts/by-puuid/${puuid}`)
 		.json();
-
-	return result;
 };
