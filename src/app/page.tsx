@@ -82,6 +82,8 @@ export default async function Home() {
 		return { ...acc, [summoner]: bestEntry };
 	}, {} as BestPerSummoner);
 
+	console.log("bestPerSummoner = ", bestPerSummoner);
+
 	// 5) 최근 3개 매치 참가자 목록 준비
 	const participantsList = matchInfos10.slice(0, 3).map((mi) =>
 		mi.info.participants.map((p) => ({
@@ -113,17 +115,6 @@ export default async function Home() {
 				{/* Top row: 타이틀 */}
 				<div className="mx-2 my-2">최근전적</div>
 
-				{/* 3-1) 소환사별 최고 승률 챔피언 요약 */}
-				{Object.entries(bestPerSummoner).map(
-					([summoner, { champion, winRate }]) => (
-						<ChampionSummary
-							key={summoner}
-							bestChampion={champion}
-							bestWinRate={winRate}
-						/>
-					),
-				)}
-
 				{/* 3-2) 최근 3개 매치 기록 */}
 				<RecentMatches
 					participantsList={participantsList}
@@ -132,9 +123,26 @@ export default async function Home() {
 
 				{/* 3-3) Middle row: 카드 섹션들 */}
 				<div className="col-span-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-					<div className="col-span-1 md:col-span-1 lg:col-span-1">
-						<CardSection title="상품별 추천 조합" data={productComboData} />
+					{/* 3-1) 소환사별 최고 승률 챔피언 요약 */}
+					<div className="col-span-12 overflow-x-auto">
+						<h1 className="text-2xl font-semibold text-gray-800 mb-2">
+							최근 20게임 중 승률이 가장 높은 챔피언
+						</h1>
+						<div className="flex flex-row gap-x-4">
+							{Object.entries(bestPerSummoner).map(
+								([summoner, { champion, winRate }]) => (
+									<div key={summoner} className="flex-shrink-0 w-64">
+										<ChampionSummary
+											summonerName={summoner}
+											bestChampion={champion}
+											bestWinRate={winRate}
+										/>
+									</div>
+								),
+							)}
+						</div>
 					</div>
+
 					<div className="col-span-1 md:col-span-1 lg:col-span-1">
 						<CardSection title="비율" data={ratioData} />
 					</div>

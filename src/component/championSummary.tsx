@@ -2,18 +2,18 @@
 import React from "react";
 
 type ChampionSummaryProps = {
+	summonerName: string;
 	bestChampion: string;
 	bestWinRate: number;
 };
 
 const ChampionSummary = ({
+	summonerName,
 	bestChampion,
 	bestWinRate,
 }: ChampionSummaryProps) => (
 	<div className="col-span-12 bg-white rounded-lg shadow-sm p-4 mb-4">
-		<h1 className="text-2xl font-semibold text-gray-800 mb-2">
-			최근 20게임 중 승률이 가장 높은 챔피언
-		</h1>
+		{summonerName}
 		{bestChampion ? (
 			<p className="text-lg text-gray-700">
 				챔피언: <span className="font-bold">{bestChampion}</span> (
