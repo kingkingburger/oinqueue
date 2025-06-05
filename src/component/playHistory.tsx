@@ -1,7 +1,8 @@
 import React from "react";
 
 type Participant = {
-	summonerName: string;
+	riotIdGameName: string;
+	riotIdTagline: string;
 	championName: string;
 	kills: number;
 	deaths: number;
@@ -37,7 +38,8 @@ export const PlayHistory = ({ participants }: PlayHistoryProps) => {
 				{/* 오른쪽: 소환사 이름 + KDA */}
 				<div className="bg-blue-300 flex-1 flex flex-col justify-center px-2 h-16 rounded-md">
 					<span className="font-medium text-white text-sm">
-						{participant.summonerName}
+						{participant.riotIdGameName}
+						{/*{participant.riotIdTagline}*/}
 					</span>
 					<span className="text-xs text-white">
 						{participant.kills}/{participant.deaths}/{participant.assists}

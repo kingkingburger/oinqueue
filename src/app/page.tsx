@@ -27,11 +27,14 @@ export default async function Home() {
 		getMatchInfo(matchIds[2]),
 	]);
 
+	console.log("matchInfos = ", matchInfos);
 	// 4) 각 매치별 participants 배열만 뽑아서 필요한 필드로 매핑
 	//    이번에는 p.win 필드를 함께 전달
 	const participantsList = matchInfos.map((matchInfo) =>
 		matchInfo.info.participants.map((p) => ({
-			summonerName: p.summonerName,
+			puuid: p.puuid,
+			riotIdGameName: p.riotIdGameName,
+			riotIdTagline: p.riotIdTagline,
 			championName: p.championName,
 			kills: p.kills,
 			deaths: p.deaths,
@@ -40,6 +43,7 @@ export default async function Home() {
 		})),
 	);
 
+	console.log("participantsList = ", participantsList);
 	// 더미 데이터 (기존 UI 구성 그대로 유지)
 	const productComboData = [20, 25, 30, 20, 5];
 	const ratioData = [15, 20, 25, 10, 30];
