@@ -34,8 +34,8 @@ export const PlayHistory = ({ participants }: PlayHistoryProps) => {
 				<span className="font-medium text-white text-sm">
 					{participant.summonerName}
 				</span>
-				<span className="text-xs text-white">
-					{participant.kills}/{participant.deaths}/{participant.assists}
+				<span className="text-xs text-white px-1">
+					{participant.kills} / {participant.deaths} / {participant.assists}
 				</span>
 			</div>
 		</div>
