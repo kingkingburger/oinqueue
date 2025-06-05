@@ -14,7 +14,6 @@ export default async function Home() {
 	const gameName = "초코산";
 	const tagName = "KR1";
 
-	// ────────────────────────────────────────────────────────────────────────────────
 	// 1) 소환사 기본 정보 가져오기
 	const summonerInfo = await getRiotSummonerInfo(gameName, tagName);
 
@@ -22,7 +21,6 @@ export default async function Home() {
 	const matchIds = await getMatchList(summonerInfo.puuid);
 
 	// 3) 1, 2, 3번째 매치 정보를 병렬로 요청
-	//    matchIds[0], matchIds[1], matchIds[2] 순서로 가져오기
 	const matchInfos = await Promise.all([
 		getMatchInfo(matchIds[0]),
 		getMatchInfo(matchIds[1]),
@@ -30,7 +28,7 @@ export default async function Home() {
 	]);
 
 	// 4) 각 매치별 participants 배열만 뽑아서 필요한 필드로 매핑
-	//    최종적으로 길이가 3인 배열이 만들어짐
+	//    이번에는 p.win 필드를 함께 전달
 	const participantsList = matchInfos.map((matchInfo) =>
 		matchInfo.info.participants.map((p) => ({
 			summonerName: p.summonerName,
@@ -38,6 +36,7 @@ export default async function Home() {
 			kills: p.kills,
 			deaths: p.deaths,
 			assists: p.assists,
+			win: p.win, // 승패 여부 포함
 		})),
 	);
 
@@ -73,25 +72,33 @@ export default async function Home() {
 
 				{/* “매치 기록” 섹션 */}
 				<div className="col-span-12 bg-gray-300 rounded-lg h-auto">
+					<Player gameName={gameName} tagName={tagName} />
+
 					<header className="px-4 mb-6 flex items-center gap-x-2">
 						<h1 className="text-2xl font-semibold text-gray-800">매치 기록</h1>
 						<DottedSeparator className="bg-black" direction="vertical" />
-						<p className="text-sm text-gray-500">최근 매치 를 확인하세요.</p>
+						<p className="text-sm text-gray-500">최근 매치를 확인하세요.</p>
 					</header>
 
+					{/* ─────────── 수정된 부분: 세 개의 PlayHistory를 가로로 정렬 ─────────── */}
 					<div className="px-4">
 						<div className="flex w-full items-stretch justify-between px-4">
-							{participantsList.map((participants, idx) => (
-								<div key={idx} className="min-w-[300px]">
-									{/* 매치 번호 헤더 */}
-									<h2 className="text-xl font-semibold text-gray-700 mb-2">
-										매치 {idx + 1}
-									</h2>
-									<PlayHistory participants={participants} />
-								</div>
-							))}
+							{participantsList.map((participants, idx) => {
+								// key로 matchIds[idx] 사용
+								const matchId = matchIds[idx];
+								return (
+									<div key={matchId} className="min-w-[300px]">
+										{/* 매치 번호 헤더 */}
+										<h2 className="text-xl font-semibold text-gray-700 mb-2">
+											매치 {idx + 1}
+										</h2>
+										<PlayHistory participants={participants} />
+									</div>
+								);
+							})}
 						</div>
 					</div>
+					{/* ──────────────────────────────────────────────────────────────── */}
 				</div>
 
 				{/* Middle row - 기존 카드 섹션 */}
