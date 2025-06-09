@@ -8,6 +8,7 @@ import CardSection from "@/component/cardSection";
 import ChampionSummary from "@/component/championSummary";
 import LargePlaceholderCard from "@/component/largePlaceholderCard";
 import RecentMatches from "@/component/recentMatches";
+import SummonerWinRateList from "@/component/summonerWinList";
 import { mainGameName, mainNames, mainTagName } from "@/constant/basic";
 
 export default async function Home() {
@@ -40,25 +41,27 @@ export default async function Home() {
 			const champ = p.championName;
 			const won = p.win ? 1 : 0;
 
-			const prevStats = acc[summoner] ?? {};
-			const prevChampionStats = prevStats[champ] ?? { wins: 0, total: 0 };
+			// acc 객체를 직접 수정
+			if (!acc[summoner]) {
+				acc[summoner] = {};
+			}
 
-			return {
-				...acc,
-				[summoner]: {
-					...prevStats,
-					[champ]: {
-						wins: prevChampionStats.wins + won,
-						total: prevChampionStats.total + 1,
-					},
-				},
-			};
+			if (!acc[summoner][champ]) {
+				acc[summoner][champ] = { wins: 0, total: 0 };
+			}
+
+			acc[summoner][champ].wins += won;
+			acc[summoner][champ].total += 1;
+
+			return acc;
 		}, {});
 
 	type BestPerSummoner = Record<
 		string,
 		{ champion: string; winRate: number; stats: ChampionStats }
 	>;
+
+	console.log("perSummonerStats = ", perSummonerStats);
 
 	const bestPerSummoner: BestPerSummoner = Object.entries(
 		perSummonerStats,
@@ -74,8 +77,13 @@ export default async function Home() {
 			},
 			{ champion: "", winRate: -1, stats: { wins: 0, total: 0 } },
 		);
-		return { ...acc, [summoner]: bestEntry };
+
+		console.log("statsObj = ", statsObj);
+		acc[summoner] = bestEntry;
+		return acc;
 	}, {} as BestPerSummoner);
+
+	console.log("bestPerSummoner = ", bestPerSummoner);
 
 	// 5) 최근 3개 매치 참가자 목록 준비
 	const participantsList = matchInfos10.slice(0, 3).map((mi) =>
@@ -100,53 +108,35 @@ export default async function Home() {
 	return (
 		<div className="min-h-screen bg-gray-100 p-6 font-sans">
 			<div className="mt-4 grid grid-cols-12 gap-4">
-				{/* 3-2) 최근 3개 매치 기록 */}
+				{/* 최근 3개 매치 기록 */}
 				<RecentMatches
 					participantsList={participantsList}
 					matchIds={top10MatchIds}
 				/>
 
-				{/* 3-3) Middle row: 카드 섹션들 */}
-				<div className="col-span-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-					{/* 3-1) 소환사별 최고 승률 챔피언 요약 */}
-					<div className="col-span-12 overflow-x-auto">
-						<h1 className="text-2xl font-semibold text-gray-800 mb-2">
-							최근 20게임 중 승률이 가장 높은 챔피언
-						</h1>
-						<div className="flex flex-row gap-x-4">
-							{Object.entries(bestPerSummoner).map(
-								([summoner, { champion, winRate }]) => (
-									<div key={summoner} className="flex-shrink-0 w-64">
-										<ChampionSummary
-											summonerName={summoner}
-											bestChampion={champion}
-											bestWinRate={winRate}
-										/>
-									</div>
-								),
-							)}
-						</div>
-					</div>
-
-					<div className="col-span-1 md:col-span-1 lg:col-span-1">
-						<CardSection title="비율" data={ratioData} />
-					</div>
-					<div className="col-span-1 md:col-span-2 lg:col-span-1">
-						<LargePlaceholderCard className="h-full min-h-[160px] md:min-h-0" />
-					</div>
+				{/* 챔피언 승률 요약 */}
+				<div className="col-span-12">
+					<h1 className="text-2xl font-semibold text-gray-800 mb-2">
+						최근 20게임 중 승률이 가장 높은 챔피언
+					</h1>
+					<SummonerWinRateList perSummonerStats={perSummonerStats} />
 				</div>
 
-				{/* 3-4) Bottom row: 카드 섹션들 */}
-				<div className="col-span-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
-					<div className="col-span-1 md:col-span-1">
-						<CardSection
-							title="가장 해를 덜 입은 밴프"
-							data={bottomCardSectionData}
-						/>
-					</div>
-					<div className="col-span-1 md:col-span-1">
-						<CardSection title="추천 조합" data={bottomRecommendedComboData} />
-					</div>
+				{/* 기타 카드 섹션 */}
+				<div className="col-span-1 md:col-span-1 lg:col-span-1">
+					<CardSection title="비율" data={ratioData} />
+				</div>
+				<div className="col-span-1 md:col-span-2 lg:col-span-1">
+					<LargePlaceholderCard className="h-full min-h-[160px]" />
+				</div>
+				<div className="col-span-1 md:col-span-1 lg:col-span-1">
+					<CardSection
+						title="가장 해를 덜 입은 밴프"
+						data={bottomCardSectionData}
+					/>
+				</div>
+				<div className="col-span-1 md:col-span-1 lg:col-span-1">
+					<CardSection title="추천 조합" data={bottomRecommendedComboData} />
 				</div>
 			</div>
 		</div>
