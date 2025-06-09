@@ -1,13 +1,8 @@
-// page.tsx
-import { Player } from "@/(main)/(player)/page";
 import type React from "react";
 
 import { getMatchInfo } from "@/lib/riotApi/getMatchInfo";
 import { getMatchList } from "@/lib/riotApi/getMatchList";
-import {
-	getRiotSummonerInfo,
-	getRiotSummonerInfoByPuuid,
-} from "@/lib/riotApi/getRiotSummonerInfo";
+import { getRiotSummonerInfo } from "@/lib/riotApi/getRiotSummonerInfo";
 
 import CardSection from "@/component/cardSection";
 import ChampionSummary from "@/component/championSummary";
@@ -17,7 +12,7 @@ import { mainGameName, mainNames, mainTagName } from "@/constant/basic";
 
 export default async function Home() {
 	// ───────────────────────────────────────────────────────────
-	// 데이터 Fetch & 가공 (모두 선언형으로만 표현)
+	// 데이터 Fetch & 가공
 	// ───────────────────────────────────────────────────────────
 
 	// 1) 소환사 puuid 조회
@@ -82,8 +77,6 @@ export default async function Home() {
 		return { ...acc, [summoner]: bestEntry };
 	}, {} as BestPerSummoner);
 
-	console.log("bestPerSummoner = ", bestPerSummoner);
-
 	// 5) 최근 3개 매치 참가자 목록 준비
 	const participantsList = matchInfos10.slice(0, 3).map((mi) =>
 		mi.info.participants.map((p) => ({
@@ -96,7 +89,6 @@ export default async function Home() {
 			win: p.win,
 		})),
 	);
-	// participantsList: Participant[][] (길이 3, 각각 10명씩)
 
 	// 6) 기존 카드용 더미 데이터
 	const productComboData = [20, 25, 30, 20, 5];
@@ -105,16 +97,9 @@ export default async function Home() {
 	const bottomCardSectionData = [22, 28, 35, 15, 0];
 	const bottomRecommendedComboData = [10, 15, 20, 25, 30];
 
-	// ───────────────────────────────────────────────────────────
-	// JSX: UI 컴포넌트 조합 (전부 선언형)
-	// ───────────────────────────────────────────────────────────
-
 	return (
 		<div className="min-h-screen bg-gray-100 p-6 font-sans">
 			<div className="mt-4 grid grid-cols-12 gap-4">
-				{/* Top row: 타이틀 */}
-				<div className="mx-2 my-2">최근전적</div>
-
 				{/* 3-2) 최근 3개 매치 기록 */}
 				<RecentMatches
 					participantsList={participantsList}
