@@ -5,7 +5,6 @@ import { getMatchList } from "@/lib/riotApi/getMatchList";
 import { getRiotSummonerInfo } from "@/lib/riotApi/getRiotSummonerInfo";
 
 import CardSection from "@/component/cardSection";
-import ChampionSummary from "@/component/championSummary";
 import LargePlaceholderCard from "@/component/largePlaceholderCard";
 import RecentMatches from "@/component/recentMatches";
 import SummonerWinRateList from "@/component/summonerWinList";
@@ -61,8 +60,6 @@ export default async function Home() {
 		{ champion: string; winRate: number; stats: ChampionStats }
 	>;
 
-	console.log("perSummonerStats = ", perSummonerStats);
-
 	const bestPerSummoner: BestPerSummoner = Object.entries(
 		perSummonerStats,
 	).reduce((acc, [summoner, statsObj]) => {
@@ -78,12 +75,9 @@ export default async function Home() {
 			{ champion: "", winRate: -1, stats: { wins: 0, total: 0 } },
 		);
 
-		console.log("statsObj = ", statsObj);
 		acc[summoner] = bestEntry;
 		return acc;
 	}, {} as BestPerSummoner);
-
-	console.log("bestPerSummoner = ", bestPerSummoner);
 
 	// 5) 최근 3개 매치 참가자 목록 준비
 	const participantsList = matchInfos10.slice(0, 3).map((mi) =>

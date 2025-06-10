@@ -26,14 +26,14 @@ const SummonerWinRateList: React.FC<Props> = ({ perSummonerStats }) => {
 	const data: WinRateData[] = Object.entries(perSummonerStats).map(
 		([summoner, statsObj]) => {
 			// 챔피언별 승률 계산
-			const champions = Object.entries(statsObj).map(
-				([name, { wins, total }]) => ({
+			const champions = Object.entries(statsObj)
+				.map(([name, { wins, total }]) => ({
 					name,
 					wins,
 					total,
 					winRate: total > 0 ? wins / total : 0,
-				}),
-			);
+				}))
+				.sort((a, b) => b.winRate - a.winRate);
 
 			// 가장 높은 승률 챔피언 추출
 			const best = champions.reduce(
