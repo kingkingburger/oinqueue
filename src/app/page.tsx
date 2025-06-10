@@ -5,10 +5,10 @@ import { getMatchList } from "@/lib/riotApi/getMatchList";
 import { getRiotSummonerInfo } from "@/lib/riotApi/getRiotSummonerInfo";
 
 import CardSection from "@/component/cardSection";
-import ChampionSummary from "@/component/championSummary";
 import LargePlaceholderCard from "@/component/largePlaceholderCard";
 import RecentMatches from "@/component/recentMatches";
 import SummonerWinRateList from "@/component/summonerWinList";
+import SummonerWorstRateList from "@/component/summonerWorstList";
 import { mainGameName, mainNames, mainTagName } from "@/constant/basic";
 
 export default async function Home() {
@@ -19,8 +19,9 @@ export default async function Home() {
 	// 1) 소환사 puuid 조회
 	const { puuid } = await getRiotSummonerInfo(mainGameName, mainTagName);
 
-	// 2) 매치 ID 리스트(최대 20개 → matchCount 10)
-	const allMatchIds = await getMatchList({ puuid, count: 10 });
+	// 2) 매치 ID 리스트
+	const matchCount = 15;
+	const allMatchIds = await getMatchList({ puuid, count: matchCount });
 	const top10MatchIds = allMatchIds.slice(0, 20);
 
 	// 3) 10개 matchInfo 병렬 요청
@@ -61,8 +62,6 @@ export default async function Home() {
 		{ champion: string; winRate: number; stats: ChampionStats }
 	>;
 
-	console.log("perSummonerStats = ", perSummonerStats);
-
 	const bestPerSummoner: BestPerSummoner = Object.entries(
 		perSummonerStats,
 	).reduce((acc, [summoner, statsObj]) => {
@@ -78,12 +77,9 @@ export default async function Home() {
 			{ champion: "", winRate: -1, stats: { wins: 0, total: 0 } },
 		);
 
-		console.log("statsObj = ", statsObj);
 		acc[summoner] = bestEntry;
 		return acc;
 	}, {} as BestPerSummoner);
-
-	console.log("bestPerSummoner = ", bestPerSummoner);
 
 	// 5) 최근 3개 매치 참가자 목록 준비
 	const participantsList = matchInfos10.slice(0, 3).map((mi) =>
@@ -117,9 +113,16 @@ export default async function Home() {
 				{/* 챔피언 승률 요약 */}
 				<div className="col-span-12">
 					<h1 className="text-2xl font-semibold text-gray-800 mb-2">
-						최근 20게임 중 승률이 가장 높은 챔피언
+						최근 {matchCount}게임 중 승률이 가장 높은 챔피언
 					</h1>
 					<SummonerWinRateList perSummonerStats={perSummonerStats} />
+				</div>
+
+				<div className="col-span-12">
+					<h1 className="text-2xl font-semibold text-gray-800 mb-2">
+						최근 {matchCount}게임 중 승률이 가장 낮은 챔피언
+					</h1>
+					<SummonerWorstRateList perSummonerStats={perSummonerStats} />
 				</div>
 
 				{/* 기타 카드 섹션 */}
