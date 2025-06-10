@@ -50,9 +50,12 @@ const SummonerWinRateList: React.FC<Props> = ({ perSummonerStats }) => {
 	);
 
 	return (
-		<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-1">
+		<div className="flex w-screen gap-4">
 			{data.map(({ summoner, champions, bestChampion }) => (
-				<div key={summoner} className="p-4 bg-white rounded-lg shadow-sm">
+				<div
+					key={summoner}
+					className="flex-1 min-w-0p-4 p-4 bg-white rounded-lg shadow-sm"
+				>
 					<h3 className="text-lg font-semibold mb-2">
 						{summoner}님의 챔피언 승률
 					</h3>
@@ -66,7 +69,7 @@ const SummonerWinRateList: React.FC<Props> = ({ perSummonerStats }) => {
 										: "text-gray-700"
 								}
 							>
-								{name}: {(winRate * 100).toFixed(1)}% ({wins}/{total})
+								{name}: {(winRate * 100).toFixed(1)}% ({wins}승 / {total}패)
 							</li>
 						))}
 					</ul>
