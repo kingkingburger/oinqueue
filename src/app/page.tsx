@@ -8,6 +8,7 @@ import CardSection from "@/component/cardSection";
 import LargePlaceholderCard from "@/component/largePlaceholderCard";
 import RecentMatches from "@/component/recentMatches";
 import SummonerWinRateList from "@/component/summonerWinList";
+import SummonerWorstRateList from "@/component/summonerWorstList";
 import { mainGameName, mainNames, mainTagName } from "@/constant/basic";
 
 export default async function Home() {
@@ -18,8 +19,9 @@ export default async function Home() {
 	// 1) 소환사 puuid 조회
 	const { puuid } = await getRiotSummonerInfo(mainGameName, mainTagName);
 
-	// 2) 매치 ID 리스트(최대 20개 → matchCount 10)
-	const allMatchIds = await getMatchList({ puuid, count: 10 });
+	// 2) 매치 ID 리스트
+	const matchCount = 15;
+	const allMatchIds = await getMatchList({ puuid, count: matchCount });
 	const top10MatchIds = allMatchIds.slice(0, 20);
 
 	// 3) 10개 matchInfo 병렬 요청
@@ -111,9 +113,16 @@ export default async function Home() {
 				{/* 챔피언 승률 요약 */}
 				<div className="col-span-12">
 					<h1 className="text-2xl font-semibold text-gray-800 mb-2">
-						최근 20게임 중 승률이 가장 높은 챔피언
+						최근 {matchCount}게임 중 승률이 가장 높은 챔피언
 					</h1>
 					<SummonerWinRateList perSummonerStats={perSummonerStats} />
+				</div>
+
+				<div className="col-span-12">
+					<h1 className="text-2xl font-semibold text-gray-800 mb-2">
+						최근 {matchCount}게임 중 승률이 가장 낮은 챔피언
+					</h1>
+					<SummonerWorstRateList perSummonerStats={perSummonerStats} />
 				</div>
 
 				{/* 기타 카드 섹션 */}
