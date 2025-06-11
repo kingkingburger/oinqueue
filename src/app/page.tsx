@@ -38,11 +38,10 @@ export default async function Home() {
 	);
 
 	// 2) 최근 15개만 사용 (기존 로직 유지)
-	const matchInfos10 = allMatchInfos;
-	// .slice(0, 15);
-	const top10MatchIds = matchInfos10.map((match) => match.metadata.matchId);
+	const matchInfos = allMatchInfos;
+	const top10MatchIds = matchInfos.map((match) => match.metadata.matchId);
 
-	const perSummonerStats: PerSummonerStats = matchInfos10
+	const perSummonerStats: PerSummonerStats = matchInfos
 		.flatMap((mi) => mi.info.participants)
 		.filter((p) => mainNames.some((name) => p.riotIdGameName.includes(name)))
 		.reduce<PerSummonerStats>((acc, p) => {
@@ -66,7 +65,7 @@ export default async function Home() {
 		}, {});
 
 	// 5) 최근 3개 매치 참가자 목록 준비
-	const participantsList = matchInfos10.slice(0, 3).map((mi) =>
+	const participantsList = matchInfos.slice(0, 3).map((mi) =>
 		mi.info.participants.map((p) => ({
 			riotIdGameName: p.riotIdGameName,
 			riotIdTagline: p.riotIdTagline,
