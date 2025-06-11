@@ -196,7 +196,7 @@ const renderChampionsList = (
 	top3Champions: TopChampion[],
 ) => (
 	<ul className="space-y-1">
-		{champions.map(renderChampionItem(top3Champions))}
+		{champions.slice(0, 6).map(renderChampionItem(top3Champions))}
 	</ul>
 );
 
