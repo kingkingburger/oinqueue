@@ -1,13 +1,11 @@
-import type React from "react";
-
-import { getMatchInfo } from "@/lib/riotApi/getMatchInfo";
-import { getMatchList } from "@/lib/riotApi/getMatchList";
 import { getRiotSummonerInfo } from "@/lib/riotApi/getRiotSummonerInfo";
+import type React from "react";
 
 import { LolpsTierList } from "@/component/lolpsTierList";
 import RecentMatches from "@/component/recentMatches";
 import SummonerWinRateList from "@/component/summonerWinList";
 import { mainGameName, mainNames, mainTagName } from "@/constant/basic";
+import { getCachedMatchInfos } from "@/lib/matchDataManager";
 import { getTierListFromPs } from "@/lib/topTierData/fromPs";
 
 type ChampionStats = { wins: number; total: number };
@@ -21,16 +19,28 @@ export default async function Home() {
 	// ───────────────────────────────────────────────────────────
 
 	// 1) 소환사 puuid 조회
-	const { puuid } = await getRiotSummonerInfo(mainGameName, mainTagName);
+	// const { puuid } = await getRiotSummonerInfo(mainGameName, mainTagName);
 
 	// 2) 매치 ID 리스트
-	const matchCount = 15;
-	const allMatchIds = await getMatchList({ puuid, count: matchCount });
-	const top10MatchIds = allMatchIds.slice(0, 20);
-	// 3) 10개 matchInfo 병렬 요청
-	const matchInfos10 = await Promise.all(
-		top10MatchIds.map((id) => getMatchInfo(id)),
+	// const allMatchIds = await getMatchList({ puuid, count: matchCount });
+	// const top10MatchIds = allMatchIds.slice(0, 20);
+	// // 3) 10개 matchInfo 병렬 요청
+	// const matchInfos10 = await Promise.all(
+	// 	top10MatchIds.map((id) => getMatchInfo(id)),
+	// );
+
+	const matchCount = 50;
+	// 1) 캐시된 매치 데이터 가져오기 (새로운 매치만 API 요청)
+	const allMatchInfos = await getCachedMatchInfos(
+		mainGameName,
+		mainTagName,
+		matchCount,
 	);
+
+	// 2) 최근 15개만 사용 (기존 로직 유지)
+	const matchInfos10 = allMatchInfos;
+	// .slice(0, 15);
+	const top10MatchIds = matchInfos10.map((match) => match.metadata.matchId);
 
 	const perSummonerStats: PerSummonerStats = matchInfos10
 		.flatMap((mi) => mi.info.participants)
