@@ -217,7 +217,9 @@ const renderSummonerCard = ({
 	bottom3Champions,
 }: RateData) => (
 	<div key={summoner} className="flex-1 p-4 bg-white rounded-2xl shadow-md">
-		<h3 className="text-lg font-semibold mb-4">{summoner}님의 챔피언 승률</h3>
+		<h3 className="text-lg font-semibold mb-4 text-gray-800">
+			{summoner}님의 챔피언 승률
+		</h3>
 		{/* Top3, Bottom3 섹션을 가로로 나란히 배치 */}
 		<div className="flex gap-4 mb-4">
 			{renderTop3Section(top3Champions)}

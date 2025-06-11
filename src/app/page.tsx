@@ -103,10 +103,12 @@ export default async function Home() {
 				</div>
 
 				{/* 최근 3개 매치 기록 */}
-				<RecentMatches
-					participantsList={participantsList}
-					matchIds={top10MatchIds}
-				/>
+				<div className="col-span-12">
+					<RecentMatches
+						participantsList={participantsList}
+						matchIds={top10MatchIds}
+					/>
+				</div>
 			</div>
 		</div>
 	);

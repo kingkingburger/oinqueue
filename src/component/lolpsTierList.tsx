@@ -27,8 +27,12 @@ const renderLaneSection = (laneList: TierListItem[], laneIdx: number) => (
 		key={laneIdx}
 		className="flex-1 min-w-[180px] p-4 bg-white rounded-lg shadow-sm"
 	>
-		<h3 className="text-lg font-semibold mb-2">{lineName[laneIdx]}</h3>
-		<ul className="space-y-0">{laneList.map(renderChampionItem)}</ul>
+		<h3 className="text-lg font-semibold mb-2 text-gray-800">
+			{lineName[laneIdx]}
+		</h3>
+		<ul className="space-y-0 text-orange-600">
+			{laneList.map(renderChampionItem)}
+		</ul>
 	</div>
 );
 
