@@ -15,6 +15,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
 	title: "Oinqueue",
 	description: "showing match history",
+	icons: {
+		icon: "/5inqueue.png",
+	},
 };
 
 export default function RootLayout({

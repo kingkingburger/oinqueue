@@ -1,4 +1,3 @@
-import { getRiotSummonerInfo } from "@/lib/riotApi/getRiotSummonerInfo";
 import type React from "react";
 
 import { LolpsTierList } from "@/component/lolpsTierList";
