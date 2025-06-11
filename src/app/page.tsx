@@ -85,35 +85,28 @@ export default async function Home() {
 
 	return (
 		<div className="min-h-screen bg-gray-100 p-6 font-sans">
-			<div className="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-				{/* Summoner 승률 섹션 (모바일 1열, md 2열, lg 3열) */}
-				<div className="col-span-1 md:col-span-2 lg:col-span-3">
+			<div className="mt-4 grid grid-cols-12 gap-4">
+				{/* 챔피언 승률 요약 */}
+				<div className="col-span-12">
 					<h1 className="text-2xl font-semibold text-gray-800 mb-2">
 						최근 {matchCount}게임
 					</h1>
-					<div className="overflow-x-auto">
-						<SummonerWinRateList perSummonerStats={perSummonerStats} />
-					</div>
+					<SummonerWinRateList perSummonerStats={perSummonerStats} />
 				</div>
 
-				{/* lolps 티어 리스트 (모바일 1열, md/lg 각각 1열) */}
-				<div>
+				{/*lolps의 티어 리스트 보여주기 */}
+				<div className="col-span-12">
 					<h1 className="text-2xl font-semibold text-gray-800 mb-2">
 						lolps의 티어 리스트
 					</h1>
 					<LolpsTierList top5TierList={top5TierList} />
 				</div>
 
-				{/* 최근 3개 매치 기록 (모바일 1열, md/lg 각각 1열) */}
-				<div>
-					<h1 className="text-2xl font-semibold text-gray-800 mb-2">
-						최근 3개 매치 기록
-					</h1>
-					<RecentMatches
-						participantsList={participantsList}
-						matchIds={top10MatchIds}
-					/>
-				</div>
+				{/* 최근 3개 매치 기록 */}
+				<RecentMatches
+					participantsList={participantsList}
+					matchIds={top10MatchIds}
+				/>
 			</div>
 		</div>
 	);
