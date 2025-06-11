@@ -1,13 +1,11 @@
-import type React from "react";
-
-import { getMatchInfo } from "@/lib/riotApi/getMatchInfo";
-import { getMatchList } from "@/lib/riotApi/getMatchList";
 import { getRiotSummonerInfo } from "@/lib/riotApi/getRiotSummonerInfo";
+import type React from "react";
 
 import { LolpsTierList } from "@/component/lolpsTierList";
 import RecentMatches from "@/component/recentMatches";
 import SummonerWinRateList from "@/component/summonerWinList";
 import { mainGameName, mainNames, mainTagName } from "@/constant/basic";
+import { getCachedMatchInfos } from "@/lib/matchDataManager";
 import { getTierListFromPs } from "@/lib/topTierData/fromPs";
 
 type ChampionStats = { wins: number; total: number };
@@ -21,18 +19,29 @@ export default async function Home() {
 	// ───────────────────────────────────────────────────────────
 
 	// 1) 소환사 puuid 조회
-	const { puuid } = await getRiotSummonerInfo(mainGameName, mainTagName);
+	// const { puuid } = await getRiotSummonerInfo(mainGameName, mainTagName);
 
 	// 2) 매치 ID 리스트
-	const matchCount = 15;
-	const allMatchIds = await getMatchList({ puuid, count: matchCount });
-	const top10MatchIds = allMatchIds.slice(0, 20);
-	// 3) 10개 matchInfo 병렬 요청
-	const matchInfos10 = await Promise.all(
-		top10MatchIds.map((id) => getMatchInfo(id)),
+	// const allMatchIds = await getMatchList({ puuid, count: matchCount });
+	// const top10MatchIds = allMatchIds.slice(0, 20);
+	// // 3) 10개 matchInfo 병렬 요청
+	// const matchInfos10 = await Promise.all(
+	// 	top10MatchIds.map((id) => getMatchInfo(id)),
+	// );
+
+	const matchCount = 50;
+	// 1) 캐시된 매치 데이터 가져오기 (새로운 매치만 API 요청)
+	const allMatchInfos = await getCachedMatchInfos(
+		mainGameName,
+		mainTagName,
+		matchCount,
 	);
 
-	const perSummonerStats: PerSummonerStats = matchInfos10
+	// 2) 최근 15개만 사용 (기존 로직 유지)
+	const matchInfos = allMatchInfos;
+	const top10MatchIds = matchInfos.map((match) => match.metadata.matchId);
+
+	const perSummonerStats: PerSummonerStats = matchInfos
 		.flatMap((mi) => mi.info.participants)
 		.filter((p) => mainNames.some((name) => p.riotIdGameName.includes(name)))
 		.reduce<PerSummonerStats>((acc, p) => {
@@ -56,7 +65,7 @@ export default async function Home() {
 		}, {});
 
 	// 5) 최근 3개 매치 참가자 목록 준비
-	const participantsList = matchInfos10.slice(0, 3).map((mi) =>
+	const participantsList = matchInfos.slice(0, 3).map((mi) =>
 		mi.info.participants.map((p) => ({
 			riotIdGameName: p.riotIdGameName,
 			riotIdTagline: p.riotIdTagline,
@@ -88,12 +97,6 @@ export default async function Home() {
 	return (
 		<div className="min-h-screen bg-gray-100 p-6 font-sans">
 			<div className="mt-4 grid grid-cols-12 gap-4">
-				{/* 최근 3개 매치 기록 */}
-				<RecentMatches
-					participantsList={participantsList}
-					matchIds={top10MatchIds}
-				/>
-
 				{/* 챔피언 승률 요약 */}
 				<div className="col-span-12">
 					<h1 className="text-2xl font-semibold text-gray-800 mb-2">
@@ -102,9 +105,19 @@ export default async function Home() {
 					<SummonerWinRateList perSummonerStats={perSummonerStats} />
 				</div>
 
+				{/*lolps의 티어 리스트 보여주기 */}
 				<div className="col-span-12">
+					<h1 className="text-2xl font-semibold text-gray-800 mb-2">
+						lolps의 티어 리스트
+					</h1>
 					<LolpsTierList top5TierList={top5TierList} />
 				</div>
+
+				{/* 최근 3개 매치 기록 */}
+				<RecentMatches
+					participantsList={participantsList}
+					matchIds={top10MatchIds}
+				/>
 			</div>
 		</div>
 	);
