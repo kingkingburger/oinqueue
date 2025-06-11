@@ -128,7 +128,7 @@ const formatWinRate = (winRate: number): string =>
 	`${(winRate * 100).toFixed(1)}%`;
 
 const formatGameRecord = (wins: number, total: number): string =>
-	`(${wins}승 / ${total}패)`;
+	`(${wins}승 / ${total - wins}패)`;
 
 // 컴포넌트 렌더링 함수들
 const renderTop3Item = ({ name, winRate, rank }: TopChampion) => (
@@ -206,7 +206,7 @@ const renderChampionsList = (
 	top3Champions: TopChampion[],
 ) => (
 	<ul className="space-y-1">
-		{champions.slice(0, 6).map(renderChampionItem(top3Champions))}
+		{champions.slice(0, 15).map(renderChampionItem(top3Champions))}
 	</ul>
 );
 
