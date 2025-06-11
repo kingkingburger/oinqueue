@@ -18,17 +18,6 @@ export default async function Home() {
 	// 데이터 Fetch & 가공
 	// ───────────────────────────────────────────────────────────
 
-	// 1) 소환사 puuid 조회
-	// const { puuid } = await getRiotSummonerInfo(mainGameName, mainTagName);
-
-	// 2) 매치 ID 리스트
-	// const allMatchIds = await getMatchList({ puuid, count: matchCount });
-	// const top10MatchIds = allMatchIds.slice(0, 20);
-	// // 3) 10개 matchInfo 병렬 요청
-	// const matchInfos10 = await Promise.all(
-	// 	top10MatchIds.map((id) => getMatchInfo(id)),
-	// );
-
 	const matchCount = 50;
 	// 1) 캐시된 매치 데이터 가져오기 (새로운 매치만 API 요청)
 	const allMatchInfos = await getCachedMatchInfos(
