@@ -1,4 +1,3 @@
-// components/ChampionSummary.tsx
 import React from "react";
 
 type ChampionSummaryProps = {
