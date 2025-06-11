@@ -4,6 +4,7 @@ import { getMatchInfo } from "@/lib/riotApi/getMatchInfo";
 import { getMatchList } from "@/lib/riotApi/getMatchList";
 import { getRiotSummonerInfo } from "@/lib/riotApi/getRiotSummonerInfo";
 
+import { LolpsTierList } from "@/component/lolpsTierList";
 import RecentMatches from "@/component/recentMatches";
 import SummonerWinRateList from "@/component/summonerWinList";
 import { mainGameName, mainNames, mainTagName } from "@/constant/basic";
@@ -80,10 +81,7 @@ export default async function Home() {
 	const top5TierList = await Promise.all(
 		params.map(async (param) => {
 			const { data } = await getTierListFromPs(param);
-			return data.slice(0, 5).map(({ championInfo, ...rest }) => ({
-				...rest,
-				championName: championInfo.nameKr, // nameKr만 championName으로 옮김
-			}));
+			return data.slice(0, 5);
 		}),
 	);
 
@@ -102,6 +100,10 @@ export default async function Home() {
 						최근 {matchCount}게임
 					</h1>
 					<SummonerWinRateList perSummonerStats={perSummonerStats} />
+				</div>
+
+				<div className="col-span-12">
+					<LolpsTierList top5TierList={top5TierList} />
 				</div>
 			</div>
 		</div>
