@@ -82,14 +82,13 @@ const processStatsForSummoner = ([summoner, statsObj]: [
 		.map(createChampion)
 		.sort(sortByWinRateDesc);
 
-	const getWorstChampions = (champions: Champion[]) =>
-		getBottom3Champions([...champions].sort(sortByWinRateAsc));
-
 	return {
 		summoner,
 		champions,
 		top3Champions: getTop3Champions(champions),
-		bottom3Champions: getWorstChampions(champions),
+		bottom3Champions: getBottom3Champions(
+			champions.toSorted(sortByWinRateAsc), // 불변 정렬
+		),
 	};
 };
 
