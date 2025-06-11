@@ -102,6 +102,7 @@ export default async function Home() {
 					<SummonerWinRateList perSummonerStats={perSummonerStats} />
 				</div>
 
+				{/*lolps의 티어 리스트 보여주기 */}
 				<div className="col-span-12">
 					<LolpsTierList top5TierList={top5TierList} />
 				</div>
