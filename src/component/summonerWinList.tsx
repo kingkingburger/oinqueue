@@ -128,38 +128,48 @@ const formatWinRate = (winRate: number): string =>
 	`${(winRate * 100).toFixed(1)}%`;
 
 const formatGameRecord = (wins: number, total: number): string =>
-	`(${wins}승 / ${total}패)`;
-
-const renderBottom3Item = ({ name, winRate, rank }: BottomChampion) => (
-	<div key={name} className="text-xs">
-		<span className="inline-block w-4">{rank}위</span>
-		<span className={`px-1 rounded ${getRankColor(rank)}`}>
-			{name}: {formatWinRate(winRate)}
-		</span>
-	</div>
-);
-
-const renderBottom3Section = (bottom3Champions: BottomChampion[]) => (
-	<div className="mb-3 p-2 bg-red-50 rounded">
-		<h4 className="text-sm font-medium text-red-800 mb-1">💔 Bottom 3</h4>
-		<div className="space-y-1">{bottom3Champions.map(renderBottom3Item)}</div>
-	</div>
-);
+	`(${wins}승 / ${total - wins}패)`;
 
 // 컴포넌트 렌더링 함수들
 const renderTop3Item = ({ name, winRate, rank }: TopChampion) => (
-	<div key={name} className="text-xs">
-		<span className="inline-block w-4">{rank}위</span>
-		<span className={`px-1 rounded ${getRankColor(rank)}`}>
-			{name}: {formatWinRate(winRate)}
+	<div key={name} className="flex flex-row items-center text-sm">
+		<span className="text-lg">{getMedalIcon(rank)}</span>
+		<span className={`px-2 py-1 rounded ${getRankColor(rank)}`}>
+			<div className="flex flex-col">
+				<div>{name}</div>
+				<div>{formatWinRate(winRate)}</div>
+			</div>
 		</span>
 	</div>
 );
 
 const renderTop3Section = (top3Champions: TopChampion[]) => (
-	<div className="mb-3 p-2 bg-blue-50 rounded">
-		<h4 className="text-sm font-medium text-blue-800 mb-1">🏆 Top 3</h4>
-		<div className="space-y-1">{top3Champions.map(renderTop3Item)}</div>
+	<div className="flex-1 mb-3 p-3 bg-blue-50 rounded-lg">
+		<h4 className="text-sm font-medium text-blue-800 mb-2">🏆 Top 3</h4>
+		<div className="flex flex-col justify-between">
+			{top3Champions.map(renderTop3Item)}
+		</div>
+	</div>
+);
+
+const renderBottom3Item = ({ name, winRate, rank }: BottomChampion) => (
+	<div key={name} className="flex items-center text-sm">
+		<span className="text-lg">{getWorstIcon(rank)}</span>
+		<span className={`px-2 py-1 rounded ${getRankColor(rank)}`}>
+			<div className="flex flex-col">
+				<div>{name}</div>
+				<div>{formatWinRate(winRate)}</div>
+			</div>
+		</span>
+	</div>
+);
+
+const renderBottom3Section = (bottom3Champions: BottomChampion[]) => (
+	<div className="flex-1 mb-3 p-3 bg-red-50 rounded-lg">
+		<h4 className="text-sm font-medium text-red-800 mb-2">💔 Bottom 3</h4>
+		<div className="flex flex-col justify-between">
+			{bottom3Champions.map(renderBottom3Item)}
+		</div>
 	</div>
 );
 
@@ -196,7 +206,7 @@ const renderChampionsList = (
 	top3Champions: TopChampion[],
 ) => (
 	<ul className="space-y-1">
-		{champions.slice(0, 6).map(renderChampionItem(top3Champions))}
+		{champions.slice(0, 15).map(renderChampionItem(top3Champions))}
 	</ul>
 );
 
@@ -206,13 +216,16 @@ const renderSummonerCard = ({
 	top3Champions,
 	bottom3Champions,
 }: RateData) => (
-	<div
-		key={summoner}
-		className="flex-1 min-w-0 p-4 bg-white rounded-lg shadow-sm"
-	>
-		<h3 className="text-lg font-semibold mb-2">{summoner}님의 챔피언 승률</h3>
-		{renderTop3Section(top3Champions)}
-		{renderBottom3Section(bottom3Champions)}
+	<div key={summoner} className="flex-1 p-4 bg-white rounded-2xl shadow-md">
+		<h3 className="text-lg font-semibold mb-4 text-gray-800">
+			{summoner}님의 챔피언 승률
+		</h3>
+		{/* Top3, Bottom3 섹션을 가로로 나란히 배치 */}
+		<div className="flex gap-4 mb-4">
+			{renderTop3Section(top3Champions)}
+			{renderBottom3Section(bottom3Champions)}
+		</div>
+		{/* 상위 6개 챔피언 리스트 */}
 		{renderChampionsList(champions, top3Champions)}
 	</div>
 );
@@ -221,7 +234,7 @@ const SummonerWinRateList: React.FC<Props> = ({ perSummonerStats }) => {
 	const data = transformPerSummonerStats(perSummonerStats);
 
 	return (
-		<div className="flex w-screen gap-4">{data.map(renderSummonerCard)}</div>
+		<div className="flex w-full gap-6 px-4">{data.map(renderSummonerCard)}</div>
 	);
 };
 
