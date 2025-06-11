@@ -147,7 +147,15 @@ const renderTop3Section = (top3Champions: TopChampion[]) => (
 	<div className="flex-1 mb-3 p-3 bg-blue-50 rounded-lg">
 		<h4 className="text-sm font-medium text-blue-800 mb-2">🏆 Top 3</h4>
 		<div className="flex flex-col justify-between">
-			{top3Champions.map(renderTop3Item)}
+			{top3Champions.map(({ name, winRate, rank }) => (
+				<div key={name} className="flex items-center text-sm mb-1">
+					<span className="text-lg">{getMedalIcon(rank)}</span>
+					<div className={`px-2 py-1 rounded ${getRankColor(rank)}`}>
+						<div>{name}</div>
+						<div>{formatWinRate(winRate)}</div>
+					</div>
+				</div>
+			))}
 		</div>
 	</div>
 );
@@ -168,7 +176,15 @@ const renderBottom3Section = (bottom3Champions: BottomChampion[]) => (
 	<div className="flex-1 mb-3 p-3 bg-red-50 rounded-lg">
 		<h4 className="text-sm font-medium text-red-800 mb-2">💔 Bottom 3</h4>
 		<div className="flex flex-col justify-between">
-			{bottom3Champions.map(renderBottom3Item)}
+			{bottom3Champions.map(({ name, winRate, rank }) => (
+				<div key={name} className="flex items-center text-sm mb-1">
+					<span className="text-lg">{getWorstIcon(rank)}</span>
+					<div className={`px-2 py-1 rounded ${getRankColor(rank)}`}>
+						<div>{name}</div>
+						<div>{formatWinRate(winRate)}</div>
+					</div>
+				</div>
+			))}
 		</div>
 	</div>
 );
@@ -216,14 +232,15 @@ const renderSummonerCard = ({
 	top3Champions,
 	bottom3Champions,
 }: RateData) => (
-	<div key={summoner} className="flex-1 p-4 bg-white rounded-2xl shadow-md">
+	<div
+		key={summoner}
+		className="w-full max-w-md flex-shrink-0 p-4 bg-white rounded-2xl shadow-md"
+	>
 		<h3 className="text-lg font-semibold mb-4">{summoner}님의 챔피언 승률</h3>
-		{/* Top3, Bottom3 섹션을 가로로 나란히 배치 */}
-		<div className="flex gap-4 mb-4">
+		<div className="flex flex-wrap gap-4 mb-4">
 			{renderTop3Section(top3Champions)}
 			{renderBottom3Section(bottom3Champions)}
 		</div>
-		{/* 상위 6개 챔피언 리스트 */}
 		{renderChampionsList(champions, top3Champions)}
 	</div>
 );
@@ -232,7 +249,9 @@ const SummonerWinRateList: React.FC<Props> = ({ perSummonerStats }) => {
 	const data = transformPerSummonerStats(perSummonerStats);
 
 	return (
-		<div className="flex w-full gap-6 px-4">{data.map(renderSummonerCard)}</div>
+		<div className="flex flex-col md:flex-row w-full gap-6 px-4">
+			{data.map(renderSummonerCard)}
+		</div>
 	);
 };
 
