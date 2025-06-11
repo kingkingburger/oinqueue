@@ -88,12 +88,6 @@ export default async function Home() {
 	return (
 		<div className="min-h-screen bg-gray-100 p-6 font-sans">
 			<div className="mt-4 grid grid-cols-12 gap-4">
-				{/* 최근 3개 매치 기록 */}
-				<RecentMatches
-					participantsList={participantsList}
-					matchIds={top10MatchIds}
-				/>
-
 				{/* 챔피언 승률 요약 */}
 				<div className="col-span-12">
 					<h1 className="text-2xl font-semibold text-gray-800 mb-2">
@@ -104,8 +98,17 @@ export default async function Home() {
 
 				{/*lolps의 티어 리스트 보여주기 */}
 				<div className="col-span-12">
+					<h1 className="text-2xl font-semibold text-gray-800 mb-2">
+						lolps의 티어 리스트
+					</h1>
 					<LolpsTierList top5TierList={top5TierList} />
 				</div>
+
+				{/* 최근 3개 매치 기록 */}
+				<RecentMatches
+					participantsList={participantsList}
+					matchIds={top10MatchIds}
+				/>
 			</div>
 		</div>
 	);
