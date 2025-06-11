@@ -118,21 +118,21 @@ export default async function Home() {
 				</div>
 
 				{/* 기타 카드 섹션 */}
-				<div className="col-span-1 md:col-span-1 lg:col-span-1">
-					<CardSection title="비율" data={ratioData} />
-				</div>
-				<div className="col-span-1 md:col-span-2 lg:col-span-1">
-					<LargePlaceholderCard className="h-full min-h-[160px]" />
-				</div>
-				<div className="col-span-1 md:col-span-1 lg:col-span-1">
-					<CardSection
-						title="가장 해를 덜 입은 밴프"
-						data={bottomCardSectionData}
-					/>
-				</div>
-				<div className="col-span-1 md:col-span-1 lg:col-span-1">
-					<CardSection title="추천 조합" data={bottomRecommendedComboData} />
-				</div>
+				{/*<div className="col-span-1 md:col-span-1 lg:col-span-1">*/}
+				{/*	<CardSection title="비율" data={ratioData} />*/}
+				{/*</div>*/}
+				{/*<div className="col-span-1 md:col-span-2 lg:col-span-1">*/}
+				{/*	<LargePlaceholderCard className="h-full min-h-[160px]" />*/}
+				{/*</div>*/}
+				{/*<div className="col-span-1 md:col-span-1 lg:col-span-1">*/}
+				{/*	<CardSection*/}
+				{/*		title="가장 해를 덜 입은 밴프"*/}
+				{/*		data={bottomCardSectionData}*/}
+				{/*	/>*/}
+				{/*</div>*/}
+				{/*<div className="col-span-1 md:col-span-1 lg:col-span-1">*/}
+				{/*	<CardSection title="추천 조합" data={bottomRecommendedComboData} />*/}
+				{/*</div>*/}
 			</div>
 		</div>
 	);
