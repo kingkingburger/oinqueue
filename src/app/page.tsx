@@ -6,6 +6,8 @@ import SummonerWinRateList from "@/component/summonerWinList";
 import { mainGameName, mainNames, mainTagName } from "@/constant/basic";
 import { getCachedMatchInfos } from "@/lib/matchDataManager";
 import { getTierListFromPs } from "@/lib/topTierData/fromPs";
+import Link from "next/link";
+import { FaYoutube } from "react-icons/fa";
 
 type ChampionStats = { wins: number; total: number };
 
@@ -84,6 +86,17 @@ export default async function Home() {
 
 	return (
 		<div className="min-h-screen bg-gray-100 p-6 font-sans">
+			<div>
+				<Link
+					target="_blank"
+					className="text-gray-800 inline-flex flex-row gap-2"
+					href="https://www.youtube.com/channel/UCK3zw3RDnfqpi5-OwyQ_k9Q"
+				>
+					<FaYoutube size={24} color={"#FF0000"} />
+					바나나 머스탱 유튜브
+				</Link>
+			</div>
+
 			<div className="mt-4 grid grid-cols-12 gap-4">
 				{/* 챔피언 승률 요약 */}
 				<div className="col-span-12">
