@@ -9,7 +9,7 @@ type RecentMatchesProps = {
 };
 
 const RecentMatches = ({ participantsList, matchIds }: RecentMatchesProps) => (
-	<div className="bg-gray-300 rounded-lg p-4">
+	<div className="bg-gray-300 rounded-lg p-4 overflow-x-auto">
 		{/* 헤더 */}
 		<div className="flex items-center mb-4">
 			<h1 className="text-2xl font-semibold text-gray-800">매치 기록</h1>

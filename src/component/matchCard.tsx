@@ -12,7 +12,7 @@ const MatchCard = ({ matchIndex, participants, matchId }: MatchCardProps) => (
 		key={matchId}
 		className="
 		  w-full             /* 부모 너비만큼 늘어남 */
-		  min-w-[300px]       /* 최대 너비 300px */
+		  min-w-0       /* 최대 너비 300px */
 		  flex-shrink         /* 축소 허용 */
 		  bg-white            /* 배경 흰색 */
 		  border border-gray-200 /* 연한 테두리 */

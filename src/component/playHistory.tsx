@@ -1,3 +1,4 @@
+import { convertChampionNameToKr } from "@/lib/convertChampionName";
 import React from "react";
 
 type Participant = {
@@ -35,12 +36,13 @@ export const PlayHistory = ({ participants }: PlayHistoryProps) => {
 				<div
 					className="
             flex-shrink-0
-            w-12 h-12 sm:w-16 sm:h-16
+            w-10 h-10 sm:w-12 sm:h-12
             bg-amber-600
             flex items-center justify-center
             text-white font-semibold text-sm
           "
 				>
+					{convertChampionNameToKr(participant.championName)}
 					{participant.championName}
 				</div>
 

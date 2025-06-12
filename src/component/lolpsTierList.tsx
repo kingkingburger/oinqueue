@@ -25,7 +25,7 @@ const renderChampionItem = (item: TierListItem) => (
 const renderLaneSection = (laneList: TierListItem[], laneIdx: number) => (
 	<div
 		key={laneIdx}
-		className="flex-1 min-w-[180px] p-4 bg-white rounded-lg shadow-sm"
+		className="flex-1 min-w-[140px] sm:min-w-[180px] p-4 bg-white rounded-lg shadow-sm"
 	>
 		<h3 className="text-lg font-semibold mb-2 text-gray-800">
 			{lineName[laneIdx]}
@@ -40,7 +40,7 @@ const renderLaneSection = (laneList: TierListItem[], laneIdx: number) => (
 export const LolpsTierList: React.FC<LolpsTierListProps> = ({
 	top5TierList,
 }) => (
-	<div className="flex w-screen gap-4">
+	<div className="flex flex-wrap gap-4 w-full overflow-x-auto md:overflow-visible">
 		{top5TierList.map(renderLaneSection)}
 	</div>
 );
