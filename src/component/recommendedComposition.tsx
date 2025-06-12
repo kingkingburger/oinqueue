@@ -123,7 +123,7 @@ export const RecommendedCompositions: React.FC<Props> = ({
 
 	/* ------------------------------ UI ------------------------------ */
 	return (
-		<div className="flex w-screen gap-4 bg-white p-6 rounded-lg shadow-md">
+		<div className="flex flex-col gap-4 bg-white p-4 sm:p-6 rounded-lg shadow-md sm:flex-row sm:flex-wrap w-full overflow-x-auto">
 			<h2 className="text-xl font-semibold text-gray-800 mb-4">추천 조합</h2>
 
 			<div className="mb-4">
@@ -131,7 +131,7 @@ export const RecommendedCompositions: React.FC<Props> = ({
 					htmlFor="tierWeight"
 					className="block text-gray-700 font-bold mb-2"
 				>
-					1티어 비율: {tierWeight}% / 우리팀 비율: {teamWeight}%
+					1티어 비율: {tierWeight}% / 우리팀 숙련도 비율: {teamWeight}%
 				</label>
 				<input
 					type="range"
@@ -144,7 +144,7 @@ export const RecommendedCompositions: React.FC<Props> = ({
 				/>
 			</div>
 
-			<div className="flex flex-row gap-4">
+			<div className="flex flex-col sm:flex-row gap-4 overflow-x-auto">
 				{Object.entries(recommended).map(([lane, data]) => (
 					<div key={lane} className="bg-gray-50 p-4 rounded-md shadow-sm">
 						<h3 className="text-lg font-medium text-gray-700 mb-2">{lane}</h3>

@@ -256,7 +256,9 @@ const SummonerRateList: React.FC<Props> = ({ perSummonerStats }) => {
 	const data = transformPerSummonerStats(perSummonerStats);
 
 	return (
-		<div className="flex w-full gap-6 px-4">{data.map(renderSummonerCard)}</div>
+		<div className="flex flex-col md:flex-row w-full gap-6 px-4">
+			{data.map(renderSummonerCard)}
+		</div>
 	);
 };
 
