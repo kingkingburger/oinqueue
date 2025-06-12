@@ -2,7 +2,7 @@ import type React from "react";
 
 import { LolpsTierList } from "@/component/lolpsTierList";
 import RecentMatches from "@/component/recentMatches";
-import SummonerWinRateList from "@/component/summonerWinList";
+import SummonerRateList from "@/component/summonerList";
 import { mainGameName, mainNames, mainTagName } from "@/constant/basic";
 import { getCachedMatchInfos } from "@/lib/matchDataManager";
 import { getTierListFromPs } from "@/lib/topTierData/fromPs";
@@ -105,7 +105,7 @@ export default async function Home() {
 					<h1 className="text-2xl font-semibold text-gray-800 mb-2">
 						최근 {matchCount}게임
 					</h1>
-					<SummonerWinRateList perSummonerStats={perSummonerStats} />
+					<SummonerRateList perSummonerStats={perSummonerStats} />
 				</div>
 
 				{/*lolps의 티어 리스트 보여주기 */}

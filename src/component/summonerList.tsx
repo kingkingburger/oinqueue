@@ -139,12 +139,12 @@ const renderTop3Item = ({ name, winRate, rank }: TopChampion) => (
 		<span className="text-lg">{getMedalIcon(rank)}</span>
 		<span className={`px-2 py-1 rounded ${getRankColor(rank)}`}>
 			<div className="flex flex-col">
-				<Image
-					alt="top3Champion"
-					src={getChampionImage(name)}
-					width={10}
-					height={10}
-				/>
+				{/*<Image*/}
+				{/*	alt="top3Champion"*/}
+				{/*	src={getChampionImage(name)}*/}
+				{/*	width={20}*/}
+				{/*	height={20}*/}
+				{/*/>*/}
 				<div>{convertChampionNameToKr(name)}</div>
 				<div>{formatWinRate(winRate)}</div>
 			</div>
@@ -166,12 +166,12 @@ const renderBottom3Item = ({ name, winRate, rank }: BottomChampion) => (
 		<span className="text-lg">{getWorstIcon(rank)}</span>
 		<span className={`px-2 py-1 rounded ${getRankColor(rank)}`}>
 			<div className="flex flex-col">
-				<Image
-					alt="bottom3Champion"
-					src={getChampionImage(name)}
-					width={10}
-					height={10}
-				/>
+				{/*<Image*/}
+				{/*	alt="bottom3Champion"*/}
+				{/*	src={getChampionImage(name)}*/}
+				{/*	width={20}*/}
+				{/*	height={20}*/}
+				{/*/>*/}
 				<div>{convertChampionNameToKr(name)}</div>
 				<div>{formatWinRate(winRate)}</div>
 			</div>
@@ -210,12 +210,12 @@ const renderChampionItem =
 					</span>
 				)}
 				<span>
-					<Image
-						alt="bottom3Champion"
-						src={getChampionImage(name)}
-						width={10}
-						height={10}
-					/>
+					{/*<Image*/}
+					{/*	alt="bottom3Champion"*/}
+					{/*	src={getChampionImage(name)}*/}
+					{/*	width={20}*/}
+					{/*	height={20}*/}
+					{/*/>*/}
 					{convertChampionNameToKr(name)}: {formatWinRate(winRate)}{" "}
 					{formatGameRecord(wins, total)}
 				</span>
@@ -252,7 +252,7 @@ const renderSummonerCard = ({
 	</div>
 );
 
-const SummonerWinRateList: React.FC<Props> = ({ perSummonerStats }) => {
+const SummonerRateList: React.FC<Props> = ({ perSummonerStats }) => {
 	const data = transformPerSummonerStats(perSummonerStats);
 
 	return (
@@ -260,4 +260,4 @@ const SummonerWinRateList: React.FC<Props> = ({ perSummonerStats }) => {
 	);
 };
 
-export default SummonerWinRateList;
+export default SummonerRateList;
