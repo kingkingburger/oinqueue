@@ -167,4 +167,5 @@ export const championName: Record<string, string> = {
 	MonkeyKing: "오공",
 	Leblanc: "르블랑",
 	Kaisa: "카이사",
+	Smolder: "스몰더",
 };
