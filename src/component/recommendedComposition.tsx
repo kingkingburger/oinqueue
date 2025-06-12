@@ -140,7 +140,7 @@ export const RecommendedCompositions: React.FC<Props> = ({
 			</div>
 
 			{/* 라인별 추천 챔피언 3인 */}
-			<div className="flex flex-col sm:flex-row gap-6 overflow-x-auto">
+			<div className="flex flex-col mx-auto sm:flex-row gap-6 overflow-x-auto">
 				{Object.entries(recommended).map(([lane, list]) => (
 					<div
 						key={lane}
@@ -153,7 +153,7 @@ export const RecommendedCompositions: React.FC<Props> = ({
 									key={item.champion}
 									className="flex justify-between text-sm"
 								>
-									<span>
+									<span className="text-gray-700">
 										{idx + 1}위&nbsp;
 										<span className="font-bold">
 											{convertChampionNameToKr(item.champion)}
