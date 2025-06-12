@@ -1,4 +1,6 @@
 import { convertChampionNameToKr } from "@/lib/convertChampionName";
+import { getChampionImage } from "@/lib/getChampionImage";
+import Image from "next/image";
 import type React from "react";
 
 export type ChampionStats = { wins: number; total: number };
@@ -137,6 +139,12 @@ const renderTop3Item = ({ name, winRate, rank }: TopChampion) => (
 		<span className="text-lg">{getMedalIcon(rank)}</span>
 		<span className={`px-2 py-1 rounded ${getRankColor(rank)}`}>
 			<div className="flex flex-col">
+				<Image
+					alt="top3Champion"
+					src={getChampionImage(name)}
+					width={10}
+					height={10}
+				/>
 				<div>{convertChampionNameToKr(name)}</div>
 				<div>{formatWinRate(winRate)}</div>
 			</div>
@@ -158,6 +166,12 @@ const renderBottom3Item = ({ name, winRate, rank }: BottomChampion) => (
 		<span className="text-lg">{getWorstIcon(rank)}</span>
 		<span className={`px-2 py-1 rounded ${getRankColor(rank)}`}>
 			<div className="flex flex-col">
+				<Image
+					alt="bottom3Champion"
+					src={getChampionImage(name)}
+					width={10}
+					height={10}
+				/>
 				<div>{convertChampionNameToKr(name)}</div>
 				<div>{formatWinRate(winRate)}</div>
 			</div>
@@ -196,6 +210,12 @@ const renderChampionItem =
 					</span>
 				)}
 				<span>
+					<Image
+						alt="bottom3Champion"
+						src={getChampionImage(name)}
+						width={10}
+						height={10}
+					/>
 					{convertChampionNameToKr(name)}: {formatWinRate(winRate)}{" "}
 					{formatGameRecord(wins, total)}
 				</span>
