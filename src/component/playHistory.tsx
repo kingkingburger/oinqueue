@@ -1,3 +1,4 @@
+import { convertChampionNameToKr } from "@/lib/convertChampionName";
 import React from "react";
 
 type Participant = {
@@ -41,6 +42,7 @@ export const PlayHistory = ({ participants }: PlayHistoryProps) => {
             text-white font-semibold text-sm
           "
 				>
+					{convertChampionNameToKr(participant.championName)}
 					{participant.championName}
 				</div>
 

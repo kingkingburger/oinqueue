@@ -1,4 +1,4 @@
-const championName = {
+export const championName: Record<string, string> = {
 	Aatrox: "아트록스",
 	Ahri: "아리",
 	Akali: "아칼리",
@@ -162,4 +162,9 @@ const championName = {
 	Zilean: "질리언",
 	Zoe: "조이",
 	Zyra: "자이라",
+	XinZhao: "신짜오",
+	Aurora: "오로라",
+	MonkeyKing: "오공",
+	Leblanc: "르블랑",
+	Kaisa: "카이사",
 };
