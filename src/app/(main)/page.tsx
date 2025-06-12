@@ -2,6 +2,7 @@ import type React from "react";
 
 import { LolpsTierList } from "@/component/lolpsTierList";
 import RecentMatches from "@/component/recentMatches";
+import { RecommendedCompositions } from "@/component/recommendedComposition";
 import SummonerRateList from "@/component/summonerList";
 import { mainGameName, mainNames, mainTagName } from "@/constant/basic";
 import { getCachedMatchInfos } from "@/lib/matchDataManager";
@@ -100,6 +101,17 @@ export default async function Home() {
 			</div>
 
 			<div className="mt-4 grid grid-cols-12 gap-4">
+				{/* 추천 조합 */}
+				<div className="col-span-12">
+					<h1 className="text-2xl font-semibold text-gray-800 mb-2">
+						오늘의 추천조합
+					</h1>
+					<RecommendedCompositions
+						perSummonerStats={perSummonerStats}
+						top5TierList={top5TierList}
+					/>
+				</div>
+
 				{/* 챔피언 승률 요약 */}
 				<div className="col-span-12">
 					<h1 className="text-2xl font-semibold text-gray-800 mb-2">
