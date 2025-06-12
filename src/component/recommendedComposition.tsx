@@ -1,6 +1,7 @@
 "use client";
 
 import type { PerSummonerStats } from "@/component/summonerList";
+import { convertChampionNameToKr } from "@/lib/convertChampionName";
 import type { TierListItem } from "@/lib/topTierData/types";
 import type React from "react";
 import { useMemo, useState } from "react";
@@ -149,7 +150,10 @@ export const RecommendedCompositions: React.FC<Props> = ({
 					<div key={lane} className="bg-gray-50 p-4 rounded-md shadow-sm">
 						<h3 className="text-lg font-medium text-gray-700 mb-2">{lane}</h3>
 						<p className="text-gray-900">
-							챔피언: <span className="font-bold">{data.champion}</span>
+							챔피언:{" "}
+							<span className="font-bold">
+								{convertChampionNameToKr(data.champion)}
+							</span>
 						</p>
 						<p className="text-gray-600">
 							예상 승률: <span className="font-bold">{data.winRate}</span>
