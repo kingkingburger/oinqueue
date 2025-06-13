@@ -4,9 +4,11 @@ import { LolpsTierList } from "@/component/lolpsTierList";
 import RecentMatches from "@/component/recentMatches";
 import { RecommendedCompositions } from "@/component/recommendedComposition";
 import SummonerRateList from "@/component/summonerList";
+import { YouTubeEmbed } from "@/component/youtubeEmbed";
 import { mainGameName, mainNames, mainTagName } from "@/constant/basic";
 import { getCachedMatchInfos } from "@/lib/matchDataManager";
 import { getTierListFromPs } from "@/lib/topTierData/fromPs";
+import { fetchTopLoLVideo } from "@/lib/youtube";
 import Link from "next/link";
 import { FaYoutube } from "react-icons/fa";
 
@@ -87,6 +89,8 @@ export default async function Home() {
 		}),
 	);
 
+	const videoResult = await fetchTopLoLVideo();
+
 	return (
 		<div className="min-h-screen bg-gray-100 p-6 font-sans">
 			<div>
@@ -134,6 +138,20 @@ export default async function Home() {
 						participantsList={participantsList}
 						matchIds={top10MatchIds}
 					/>
+				</div>
+				<div className="col-span-12">
+					<h2 className="text-xl font-semibold text-gray-800 mb-2">
+						최신 롤 영상
+					</h2>
+					<div className="bg-white rounded-lg shadow-md p-4">
+						<h3 className="text-lg font-medium mb-3 text-gray-700">
+							{videoResult?.title}
+						</h3>
+						<YouTubeEmbed
+							videoId={videoResult?.id}
+							title={videoResult?.title}
+						/>
+					</div>
 				</div>
 			</div>
 		</div>
