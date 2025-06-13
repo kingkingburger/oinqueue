@@ -1,14 +1,23 @@
-import * as fs from "node:fs/promises";
-import path from "node:path";
 import { getMatchInfo } from "@/lib/riotApi/getMatchInfo";
 import { getMatchList } from "@/lib/riotApi/getMatchList";
 import { getRiotSummonerInfo } from "@/lib/riotApi/getRiotSummonerInfo";
 import type { MatchInfoResponse } from "@/lib/riotApi/type/matchInfoResponse";
+import { createClient } from "@supabase/supabase-js";
 
-interface MatchData {
-	matchIds: string[];
-	matchInfos: MatchInfoResponse[]; // getMatchInfo 반환 타입에 맞게 수정
-	lastUpdated: string;
+// Supabase 클라이언트 설정
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY || "";
+const supabase = createClient(supabaseUrl, supabaseKey);
+
+// 데이터베이스 타입 정의
+interface MatchRecord {
+	id: string;
+	puuid: string;
+	match_id: string;
+	match_info: MatchInfoResponse;
+	game_creation: number;
+	created_at: string;
+	updated_at: string;
 }
 
 interface CachedMatchData {
@@ -17,87 +26,209 @@ interface CachedMatchData {
 	lastUpdated: string | null;
 }
 
-const DATA_DIR = path.join(process.cwd(), "data");
+// 데이터 변환 유틸리티 함수들
+const createMatchRecord = (
+	puuid: string,
+	matchId: string,
+	matchInfo: MatchInfoResponse,
+): Omit<MatchRecord, "id" | "created_at" | "updated_at"> => ({
+	puuid,
+	match_id: matchId,
+	match_info: matchInfo,
+	game_creation: matchInfo.info.gameCreation,
+});
 
-async function ensureDataDir() {
-	try {
-		await fs.access(DATA_DIR);
-	} catch {
-		await fs.mkdir(DATA_DIR, { recursive: true });
-	}
-}
+// DB 레코드를 매치 정보로 변환
+const transformToMatchInfo = (record: MatchRecord): MatchInfoResponse =>
+	record.match_info;
 
-async function loadExistingMatchData(puuid: string): Promise<CachedMatchData> {
-	await ensureDataDir();
+// 매치 레코드 배열에서 매치 ID Set 생성
+const createMatchIdSet = (records: MatchRecord[]): Set<string> =>
+	new Set(records.map((record) => record.match_id));
 
-	const filePath = path.join(DATA_DIR, `${puuid}_match_data.json`);
+// 레코드들 중 가장 최근 업데이트 시간 반환
+const getLastUpdated = (records: MatchRecord[]): string | null =>
+	records.length > 0
+		? Math.max(
+				...records.map((r) => new Date(r.updated_at).getTime()),
+			).toString()
+		: null;
 
-	try {
-		const data = await fs.readFile(filePath, "utf8");
-		const parsed: MatchData = JSON.parse(data);
-		return {
-			matchIds: new Set(parsed.matchIds || []),
-			matchInfos: parsed.matchInfos || [],
-			lastUpdated: parsed.lastUpdated,
-		};
-	} catch {
+// 데이터베이스 접근 함수들
+
+/**
+ * 기존 매치 데이터를 데이터베이스에서 로드
+ * @param puuid 플레이어의 고유 식별자
+ * @returns 캐시된 매치 데이터
+ */
+const loadExistingMatchData = async (
+	puuid: string,
+): Promise<CachedMatchData> => {
+	const { data: records, error } = await supabase
+		.from("match_cache")
+		.select("*")
+		.eq("puuid", puuid)
+		.order("game_creation", { ascending: false });
+
+	if (error) {
+		console.error("매치 데이터 로드 실패:", error);
 		return {
 			matchIds: new Set(),
 			matchInfos: [],
 			lastUpdated: null,
 		};
 	}
-}
 
-async function saveMatchData(
-	puuid: string,
-	matchIds: Set<string>,
-	matchInfos: MatchInfoResponse[],
-) {
-	await ensureDataDir();
+	const matchRecords = records || [];
 
-	const filePath = path.join(DATA_DIR, `${puuid}_match_data.json`);
-
-	const dataToSave: MatchData = {
-		matchIds: Array.from(matchIds),
-		matchInfos: matchInfos,
-		lastUpdated: new Date().toISOString(),
+	return {
+		matchIds: createMatchIdSet(matchRecords),
+		matchInfos: matchRecords.map(transformToMatchInfo),
+		lastUpdated: getLastUpdated(matchRecords),
 	};
+};
 
-	await fs.writeFile(filePath, JSON.stringify(dataToSave, null, 2));
-}
+/**
+ * 새로운 매치 정보들을 데이터베이스에 저장
+ * @param puuid 플레이어의 고유 식별자
+ * @param newMatches 저장할 새로운 매치 정보들
+ */
+const saveNewMatchInfos = async (
+	puuid: string,
+	newMatches: Array<{ matchId: string; matchInfo: MatchInfoResponse }>,
+): Promise<void> => {
+	if (newMatches.length === 0) return;
 
-export async function getCachedMatchInfos(
+	const recordsToInsert = newMatches.map(({ matchId, matchInfo }) =>
+		createMatchRecord(puuid, matchId, matchInfo),
+	);
+
+	const { error } = await supabase.from("match_cache").upsert(recordsToInsert);
+
+	if (error) {
+		console.error("매치 데이터 저장 실패:", error);
+		throw new Error(`매치 데이터 저장 실패: ${error.message}`);
+	}
+};
+
+/**
+ * Riot API에서 새로운 매치 정보들을 가져옴
+ * @param newMatchIds 가져올 매치 ID 목록
+ * @returns 매치 정보 배열
+ */
+const fetchNewMatchInfos = async (
+	newMatchIds: string[],
+): Promise<MatchInfoResponse[]> => Promise.all(newMatchIds.map(getMatchInfo));
+
+// 메인 함수
+
+/**
+ * 캐시된 매치 정보들을 가져오는 메인 함수
+ * - 기존 캐시된 데이터와 새로운 매치를 비교하여 중복 없이 반환
+ * - 새로운 매치가 있으면 자동으로 캐시에 저장
+ *
+ * @param mainGameName 게임 내 닉네임
+ * @param mainTagName 태그 이름 (예: KR1)
+ * @param requestCount 요청할 매치 개수 (기본값: 50)
+ * @returns 최신순으로 정렬된 매치 정보 배열
+ */
+export const getCachedMatchInfos = async (
 	mainGameName: string,
 	mainTagName: string,
 	requestCount = 50,
-) {
-	const { puuid } = await getRiotSummonerInfo(mainGameName, mainTagName);
-	const existingData = await loadExistingMatchData(puuid);
+): Promise<MatchInfoResponse[]> => {
+	try {
+		// 플레이어의 PUUID 가져오기
+		const { puuid } = await getRiotSummonerInfo(mainGameName, mainTagName);
 
-	const allMatchIds = await getMatchList({ puuid, count: requestCount });
-	const newMatchIds = allMatchIds.filter(
-		(id) => !existingData.matchIds.has(id),
-	);
+		// 기존 캐시된 매치 데이터 로드
+		const existingData = await loadExistingMatchData(puuid);
 
-	let newMatchInfos: MatchInfoResponse[] = [];
-	if (newMatchIds.length > 0) {
-		newMatchInfos = await Promise.all(
-			newMatchIds.map((id) => getMatchInfo(id)),
+		// Riot API에서 최신 매치 ID 목록 가져오기
+		const allMatchIds = await getMatchList({ puuid, count: requestCount });
+
+		// 캐시에 없는 새로운 매치 ID만 필터링
+		const newMatchIds = allMatchIds.filter(
+			(id) => !existingData.matchIds.has(id),
 		);
 
-		const updatedMatchInfos = [...newMatchInfos, ...existingData.matchInfos];
-		const updatedMatchIds = new Set([...newMatchIds, ...existingData.matchIds]);
+		// 새로운 매치가 없으면 기존 데이터 반환
+		if (newMatchIds.length === 0) {
+			return existingData.matchInfos;
+		}
 
-		await saveMatchData(puuid, updatedMatchIds, updatedMatchInfos);
+		// 새로운 매치 정보들을 Riot API에서 가져오기
+		const newMatchInfos = await fetchNewMatchInfos(newMatchIds);
+		const newMatches = newMatchIds.map((matchId, index) => ({
+			matchId,
+			matchInfo: newMatchInfos[index],
+		}));
+
+		// 새로운 매치 정보들을 데이터베이스에 저장
+		await saveNewMatchInfos(puuid, newMatches);
+
+		// 새로운 매치와 기존 매치를 합쳐서 반환
+		const allMatchInfos = [...newMatchInfos, ...existingData.matchInfos];
+
+		// 게임 생성 시간 기준으로 최신순 정렬하여 반환
+		return allMatchInfos.sort(
+			(a, b) => b.info.gameCreation - a.info.gameCreation,
+		);
+	} catch (error) {
+		console.error("getCachedMatchInfos 에러:", error);
+		throw error;
+	}
+};
+
+// 추가 유틸리티 함수들
+
+/**
+ * 특정 플레이어의 모든 매치 캐시를 삭제
+ * @param puuid 플레이어의 고유 식별자
+ */
+export const clearMatchCache = async (puuid: string): Promise<void> => {
+	const { error } = await supabase
+		.from("match_cache")
+		.delete()
+		.eq("puuid", puuid);
+
+	if (error) {
+		console.error("매치 캐시 삭제 실패:", error);
+		throw new Error(`매치 캐시 삭제 실패: ${error.message}`);
+	}
+};
+
+/**
+ * 특정 플레이어의 매치 캐시 통계 정보를 가져옴
+ * @param puuid 플레이어의 고유 식별자
+ * @returns 총 매치 수, 가장 오래된 매치, 가장 최신 매치 정보
+ */
+export const getMatchCacheStats = async (
+	puuid: string,
+): Promise<{
+	totalMatches: number;
+	oldestMatch: string | null;
+	newestMatch: string | null;
+}> => {
+	const { data: records, error } = await supabase
+		.from("match_cache")
+		.select("game_creation")
+		.eq("puuid", puuid)
+		.order("game_creation", { ascending: false });
+
+	if (error || !records) {
+		return { totalMatches: 0, oldestMatch: null, newestMatch: null };
 	}
 
-	const allMatchInfos =
-		newMatchIds.length > 0
-			? [...newMatchInfos, ...existingData.matchInfos]
-			: existingData.matchInfos;
-
-	return allMatchInfos.sort(
-		(a, b) => b.info.gameCreation - a.info.gameCreation,
-	);
-}
+	return {
+		totalMatches: records.length,
+		oldestMatch:
+			records.length > 0
+				? new Date(records[records.length - 1].game_creation).toISOString()
+				: null,
+		newestMatch:
+			records.length > 0
+				? new Date(records[0].game_creation).toISOString()
+				: null,
+	};
+};
