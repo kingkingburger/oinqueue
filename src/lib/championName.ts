@@ -87,7 +87,7 @@ export const championName: Record<string, string> = {
 	Neeko: "니코",
 	Nidalee: "니달리",
 	Nilah: "닐라",
-	Nocturne: "녹터",
+	Nocturne: "녹턴",
 	NunuWillump: "누누와 윌럼프",
 	Olaf: "올라프",
 	Orianna: "오리아나",
