@@ -21,7 +21,6 @@ export const PlayHistory = ({ participants }: PlayHistoryProps) => {
 
 	const renderRow = (participant: Participant, key: number) => {
 		const rowBgClass = participant.win ? "bg-blue-200" : "bg-red-200";
-
 		return (
 			<div
 				key={key}

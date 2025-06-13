@@ -1,3 +1,15 @@
+/*
+숙련도 계산 로직:
+
+경험치 보너스: 50게임을 기준으로 경험치를 계산 (최대 1.0)
+일관성 보너스: 10게임 이상 플레이했을 때 완전한 보너스, 그 이하는 비례적 감소
+최종 숙련도: 승률 × 경험치 × 일관성 × 100
+
+🔄 점수 계산 방식 변경
+
+숙련도 × (팀 가중치 / 100)
+*/
+
 "use client";
 
 import type { PerSummonerStats } from "@/component/summonerList";
@@ -24,6 +36,18 @@ interface Props {
 	perSummonerStats: PerSummonerStats;
 	top5TierList: TierListItem[][];
 }
+
+/* ─────────────────────────────────── 숙련도 계산 함수 ─────────────────────────────────── */
+const calculateProficiency = (wins: number, total: number): number => {
+	if (total === 0) return 0;
+
+	const winRate = wins / total;
+	const gameExperience = Math.min(total / 50, 1); // 50게임을 기준으로 경험치 정규화 (0~1)
+	const consistencyBonus = total >= 10 ? 1 : total / 10; // 10게임 이상일 때 일관성 보너스
+
+	// 숙련도 = (승률 * 경험치 보너스 * 일관성 보너스) * 100
+	return winRate * gameExperience * consistencyBonus * 100;
+};
 
 /* ─────────────────────────────────── 컴포넌트 ─────────────────────────────────── */
 export const RecommendedCompositions: React.FC<Props> = ({
@@ -64,55 +88,97 @@ export const RecommendedCompositions: React.FC<Props> = ({
 
 	/* --------------------- 2) 추천 조합 계산 (Top 3) --------------------- */
 	const recommended = useMemo<
-		Record<string, { champion: string; winRate: string }[]>
+		Record<
+			string,
+			{
+				champion: string;
+				winRate: string;
+				proficiency: string;
+				games: number;
+			}[]
+		>
 	>(() => {
 		return Object.keys(laneNames)
 			.map(Number)
-			.reduce<Record<string, { champion: string; winRate: string }[]>>(
-				(acc, laneId) => {
-					const laneName = laneNames[laneId];
+			.reduce<
+				Record<
+					string,
+					{
+						champion: string;
+						winRate: string;
+						proficiency: string;
+						games: number;
+					}[]
+				>
+			>((acc, laneId) => {
+				const laneName = laneNames[laneId];
 
-					/* ① 1티어 점수 계산  */
-					const tierCandidates = (top5TierList[laneId] ?? []).reduce<
-						Record<string, { score: number; winRate: number }>
-					>((acc, tierChamp, idx) => {
-						const champ = tierChamp.championInfo.nameUs;
-						const tierScore = (5 - idx) * tierWeight; // 랭킹 역순 가중치
-						const wr = Number.parseFloat(tierChamp.winRate.replace("%", ""));
-						acc[champ] = { score: tierScore, winRate: wr };
-						return acc;
-					}, {});
-
-					/* ② 우리 팀 승률 점수 반영 */
-					const candidates = Object.entries(
-						teamChampStatsByLane[laneId] ?? {},
-					).reduce(
-						(acc, [champ, stat]) => {
-							const winRate = (stat.wins / stat.total) * 100; // 승률
-							const teamScore = winRate * teamWeight;
-							acc[champ] = acc[champ]
-								? { score: acc[champ].score + teamScore, winRate: winRate } // 기존 점수 누적
-								: { score: teamScore, winRate: winRate }; // 새로 추가
-							return acc;
-						},
-						{ ...tierCandidates },
-					);
-
-					/* ③ 점수 내림차순 정렬 후 Top 3 추출 */
-					const top3 = Object.entries(candidates)
-						.map(([champ, data]) => ({
-							champion: champ,
-							winRate: `${data.winRate.toFixed(2)}%`,
-							score: data.score,
-						}))
-						.sort((a, b) => b.score - a.score)
-						.slice(0, 3);
-
-					acc[laneName] = top3;
+				/* ① 1티어 점수 계산  */
+				const tierCandidates = (top5TierList[laneId] ?? []).reduce<
+					Record<
+						string,
+						{
+							score: number;
+							winRate: number;
+							proficiency: number;
+							games: number;
+						}
+					>
+				>((acc, tierChamp, idx) => {
+					const champ = tierChamp.championInfo.nameUs;
+					const tierScore = (5 - idx) * tierWeight; // 랭킹 역순 가중치
+					const wr = Number.parseFloat(tierChamp.winRate.replace("%", ""));
+					acc[champ] = {
+						score: tierScore,
+						winRate: wr,
+						proficiency: 0,
+						games: 0,
+					};
 					return acc;
-				},
-				{},
-			);
+				}, {});
+
+				/* ② 우리 팀 숙련도 점수 반영 */
+				const candidates = Object.entries(
+					teamChampStatsByLane[laneId] ?? {},
+				).reduce(
+					(acc, [champ, stat]) => {
+						const winRate = (stat.wins / stat.total) * 100;
+						const proficiency = calculateProficiency(stat.wins, stat.total);
+						const teamScore = proficiency * (teamWeight / 100); // 숙련도 기반 점수
+
+						acc[champ] = acc[champ]
+							? {
+									score: acc[champ].score + teamScore,
+									winRate: winRate,
+									proficiency: proficiency,
+									games: stat.total,
+								}
+							: {
+									score: teamScore,
+									winRate: winRate,
+									proficiency: proficiency,
+									games: stat.total,
+								};
+						return acc;
+					},
+					{ ...tierCandidates },
+				);
+
+				/* ③ 점수 내림차순 정렬 후 Top 3 추출 */
+				const top3 = Object.entries(candidates)
+					.map(([champ, data]) => ({
+						champion: champ,
+						winRate: `${data.winRate.toFixed(1)}%`,
+						proficiency: `${data.proficiency.toFixed(1)}`,
+						games: data.games,
+						score: data.score,
+					}))
+					.sort((a, b) => b.score - a.score)
+					.slice(0, 3);
+
+				acc[laneName] = top3;
+				return acc;
+			}, {});
 	}, [tierWeight, teamChampStatsByLane, top5TierList, teamWeight]);
 
 	/* ------------------------------ UI ------------------------------ */
@@ -137,6 +203,9 @@ export const RecommendedCompositions: React.FC<Props> = ({
 					onChange={(e) => setTierWeight(Number(e.target.value))}
 					className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
 				/>
+				<div className="text-sm text-gray-600 mt-2">
+					※ 숙련도 = 승률 × 경험치(게임수) × 일관성 보너스
+				</div>
 			</div>
 
 			{/* 라인별 추천 챔피언 3인 */}
@@ -144,22 +213,34 @@ export const RecommendedCompositions: React.FC<Props> = ({
 				{Object.entries(recommended).map(([lane, list]) => (
 					<div
 						key={lane}
-						className="bg-gray-50 p-4 rounded-md shadow-sm min-w-[180px]"
+						className="bg-gray-50 p-4 rounded-md shadow-sm min-w-[200px]"
 					>
 						<h3 className="text-lg font-medium text-gray-700 mb-3">{lane}</h3>
-						<ol className="space-y-1">
+						<ol className="space-y-2">
 							{list.map((item, idx) => (
-								<li
-									key={item.champion}
-									className="flex justify-between text-sm"
-								>
-									<span className="text-gray-700">
-										{idx + 1}위&nbsp;
-										<span className="font-bold">
-											{convertChampionNameToKr(item.champion)}
-										</span>
-									</span>
-									<span className="text-gray-600">{item.winRate}</span>
+								<li key={item.champion} className="bg-white p-2 rounded border">
+									<div className="flex justify-between items-start">
+										<div className="flex-1">
+											<div className="text-sm font-bold text-gray-800">
+												{idx + 1}위 {convertChampionNameToKr(item.champion)}
+											</div>
+											<div className="text-xs text-gray-600 mt-1">
+												{item.games > 0 ? (
+													<>
+														승률: {item.winRate} ({item.games}게임)
+														<br />
+														숙련도: {item.proficiency}
+													</>
+												) : (
+													<>
+														메타 승률: {item.winRate}
+														<br />
+														<span className="text-orange-600">미플레이</span>
+													</>
+												)}
+											</div>
+										</div>
+									</div>
 								</li>
 							))}
 						</ol>
