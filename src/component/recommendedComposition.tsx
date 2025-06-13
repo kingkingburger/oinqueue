@@ -13,6 +13,7 @@
 "use client";
 
 import type { PerSummonerStats } from "@/component/summonerList";
+import { calculateProficiency } from "@/lib/calculateProficiency";
 import { convertChampionNameToKr } from "@/lib/convertChampionName";
 import type { TierListItem } from "@/lib/topTierData/types";
 import type React from "react";
@@ -36,18 +37,6 @@ interface Props {
 	perSummonerStats: PerSummonerStats;
 	top5TierList: TierListItem[][];
 }
-
-/* ─────────────────────────────────── 숙련도 계산 함수 ─────────────────────────────────── */
-const calculateProficiency = (wins: number, total: number): number => {
-	if (total === 0) return 0;
-
-	const winRate = wins / total;
-	const gameExperience = Math.min(total / 50, 1); // 50게임을 기준으로 경험치 정규화 (0~1)
-	const consistencyBonus = total >= 10 ? 1 : total / 10; // 10게임 이상일 때 일관성 보너스
-
-	// 숙련도 = (승률 * 경험치 보너스 * 일관성 보너스) * 100
-	return winRate * gameExperience * consistencyBonus * 100;
-};
 
 /* ─────────────────────────────────── 컴포넌트 ─────────────────────────────────── */
 export const RecommendedCompositions: React.FC<Props> = ({
