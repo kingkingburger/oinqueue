@@ -1,11 +1,13 @@
 import type React from "react";
 
 import { LolpsTierList } from "@/component/lolpsTierList";
+import { PerformanceGrid } from "@/component/performanceGrid";
 import RecentMatches from "@/component/recentMatches";
 import { RecommendedCompositions } from "@/component/recommendedComposition";
 import SummonerRateList from "@/component/summonerList";
 import { mainGameName, mainNames, mainTagName } from "@/constant/basic";
 import { getCachedMatchInfos } from "@/lib/matchDataManager";
+import { computeSummonerMetrics } from "@/lib/metrics";
 import { getTierListFromPs } from "@/lib/topTierData/fromPs";
 import Link from "next/link";
 import { FaYoutube } from "react-icons/fa";
@@ -56,6 +58,8 @@ export default async function Home() {
 			return acc;
 		}, {});
 
+	console.log("matchInfos = ", matchInfos[0]);
+
 	// 최근 3개 매치 참가자 목록 준비(화면에 3개만 보여주기 위함)
 	const participantsList = matchInfos.slice(0, 3).map((mi) =>
 		mi.info.participants.map((p) => ({
@@ -85,6 +89,11 @@ export default async function Home() {
 			const { data } = await getTierListFromPs(param);
 			return data.slice(0, 5);
 		}),
+	);
+
+	// 우리팀의 지표 계산
+	const teamMatric = mainNames.map((name) =>
+		computeSummonerMetrics(matchInfos, name),
 	);
 
 	return (
@@ -134,6 +143,11 @@ export default async function Home() {
 						participantsList={participantsList}
 						matchIds={top10MatchIds}
 					/>
+				</div>
+				<div className="col-span-12">
+					{teamMatric.map((metric) => (
+						<PerformanceGrid key={metric.length} metrics={metric} />
+					))}
 				</div>
 			</div>
 		</div>
