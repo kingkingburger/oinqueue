@@ -1,3 +1,4 @@
+import { calculateProficiency } from "@/lib/calculateProficiency";
 import { convertChampionNameToKr } from "@/lib/convertChampionName";
 import { getChampionImage } from "@/lib/getChampionImage";
 import Image from "next/image";
@@ -50,11 +51,17 @@ const createChampion = ([name, { wins, total }]: [
 	winRate: calculateWinRate(wins, total),
 });
 
-const sortByWinRateDesc = (a: Champion, b: Champion): number =>
-	b.winRate - a.winRate;
+const sortByProficiencyDesc = (a: Champion, b: Champion): number => {
+	const aProficiency = calculateProficiency(a.wins, a.total);
+	const bProficiency = calculateProficiency(b.wins, b.total);
+	return bProficiency - aProficiency;
+};
 
-const sortByWinRateAsc = (a: Champion, b: Champion): number =>
-	a.winRate - b.winRate;
+const sortByProficiencyAsc = (a: Champion, b: Champion): number => {
+	const aProficiency = calculateProficiency(a.wins, a.total);
+	const bProficiency = calculateProficiency(b.wins, b.total);
+	return aProficiency - bProficiency;
+};
 
 const createTopChampion = (champion: Champion, index: number): TopChampion => ({
 	name: champion.name,
@@ -83,14 +90,14 @@ const processStatsForSummoner = ([summoner, statsObj]: [
 ]): RateData => {
 	const champions = Object.entries(statsObj)
 		.map(createChampion)
-		.sort(sortByWinRateDesc);
+		.sort(sortByProficiencyDesc);
 
 	return {
 		summoner,
 		champions,
 		top3Champions: getTop3Champions(champions),
 		bottom3Champions: getBottom3Champions(
-			champions.toSorted(sortByWinRateAsc), // 불변 정렬
+			champions.toSorted(sortByProficiencyAsc), // 불변 정렬
 		),
 	};
 };
@@ -240,7 +247,7 @@ const renderSummonerCard = ({
 }: RateData) => (
 	<div key={summoner} className="flex-1 p-4 bg-white rounded-2xl shadow-md">
 		<h3 className="text-lg font-semibold mb-4 text-gray-800">
-			{summoner}님의 챔피언 승률
+			{summoner}님 전적(숙련도 기준)
 		</h3>
 		{/* Top3, Bottom3 섹션을 가로로 나란히 배치 */}
 		<div className="flex gap-4 mb-4">
