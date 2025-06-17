@@ -1,7 +1,4 @@
-"use client";
-
 import type React from "react";
-import { useMemo } from "react";
 
 interface Metric {
 	key: string;
@@ -24,16 +21,14 @@ interface Props {
  */
 export const PerformanceGrid: React.FC<Props> = ({ metrics }) => {
 	// 소환사 이름 기준으로 Metric 배열을 그룹화 (메모이제이션으로 렌더 최적화)
-	const groupedMap = useMemo(() => {
-		return metrics.reduce<Map<string, Metric[]>>((map, metric) => {
-			const summonerName = metric.summonerName;
-			if (!map.has(summonerName)) {
-				map.set(summonerName, []);
-			}
-			map.get(summonerName)?.push(metric);
-			return map;
-		}, new Map());
-	}, [metrics]);
+	const groupedMap = metrics.reduce<Map<string, Metric[]>>((map, metric) => {
+		const summonerName = metric.summonerName;
+		if (!map.has(summonerName)) {
+			map.set(summonerName, []);
+		}
+		map.get(summonerName)?.push(metric);
+		return map;
+	}, new Map());
 
 	return (
 		<div className="flex flex-wrap gap-6 p-4 text-gray-800">
