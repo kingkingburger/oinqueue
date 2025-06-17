@@ -124,9 +124,7 @@ export default async function HomeContent() {
 
 				{/* 팀의 지표 */}
 				<div className="col-span-12">
-					{teamMatric.map((metric, index) => (
-						<PerformanceGrid key={mainNames[index]} metrics={metric} />
-					))}
+					<PerformanceGrid metricsList={teamMatric} />
 				</div>
 
 				{/* 챔피언 승률, 숙련도 요약 */}
