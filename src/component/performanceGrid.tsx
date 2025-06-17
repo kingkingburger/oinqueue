@@ -21,13 +21,13 @@ interface Props {
  */
 export const PerformanceGrid: React.FC<Props> = ({ metricsList }) => {
 	return (
-		<div className="inline-flex justify-center gap-6 p-4 text-gray-800">
+		<div className="flex flex-col md:flex-row justify-center gap-6 p-4 text-gray-800">
 			{metricsList.map((groupMetrics) => {
 				const summonerName = groupMetrics[0]?.summonerName;
 				return (
 					<section
 						key={summonerName}
-						className="flex-none w-80 max-w-full bg-white p-6 rounded-2xl shadow-md"
+						className="flex-none w-full sm:w-96 max-w-full bg-white p-6 rounded-2xl shadow-md"
 					>
 						<h2 className="text-center text-xl font-semibold mb-6">
 							{summonerName}
