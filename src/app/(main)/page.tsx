@@ -30,12 +30,15 @@ export default async function Home() {
 		matchCount,
 	);
 
-	// matchCount만큼 매치 처리
-	const matchInfos = allMatchInfos;
-	const top10MatchIds = matchInfos.map((match) => match.metadata.matchId);
+	// db에 있는 match 정보
+	const originalMathInfo = allMatchInfos.matchInfos;
+	// db에 있는 timeline match 정보
+	const timelineMatchInfo = allMatchInfos.matchTimelines;
+	// 매치 데이터의 matchId만 추출
+	const top10MatchIds = originalMathInfo.map((match) => match.metadata.matchId);
 
 	// 소환사의 챔피언별 승리, 토탈 계산
-	const perSummonerStats: PerSummonerStats = matchInfos
+	const perSummonerStats: PerSummonerStats = originalMathInfo
 		.flatMap((mi) => mi.info.participants)
 		.filter((p) => mainNames.some((name) => p.riotIdGameName.includes(name)))
 		.reduce<PerSummonerStats>((acc, p) => {
@@ -59,7 +62,7 @@ export default async function Home() {
 		}, {});
 
 	// 최근 3개 매치 참가자 목록 준비(화면에 3개만 보여주기 위함)
-	const participantsList = matchInfos.slice(0, 3).map((mi) =>
+	const participantsList = originalMathInfo.slice(0, 3).map((mi) =>
 		mi.info.participants.map((p) => ({
 			riotIdGameName: p.riotIdGameName,
 			riotIdTagline: p.riotIdTagline,
@@ -91,7 +94,7 @@ export default async function Home() {
 
 	// 우리팀의 지표 계산
 	const teamMatric = mainNames.map((name) =>
-		computeSummonerMetrics(matchInfos, name),
+		computeSummonerMetrics(originalMathInfo, timelineMatchInfo, name),
 	);
 
 	return (

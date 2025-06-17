@@ -1,4 +1,5 @@
 import type { MatchInfoResponse } from "@/lib/riotApi/type/matchInfoResponse";
+import type { TimelineDto } from "@/lib/riotApi/type/mathInfoTimeLineResponse";
 
 export type Metric = {
 	key: string;
@@ -11,6 +12,7 @@ export type Metric = {
 
 export function computeSummonerMetrics(
 	matches: MatchInfoResponse[],
+	matchTimeline: TimelineDto[],
 	summonerName: string,
 ): Metric[] {
 	const myTeams = matches

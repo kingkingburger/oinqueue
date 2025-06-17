@@ -27,6 +27,7 @@ interface MatchRecord {
 interface CachedMatchData {
 	matchIds: Set<string>;
 	matchInfos: MatchInfoResponse[];
+	matchInfoTimeline: TimelineDto[];
 	lastUpdated: string | null;
 }
 
@@ -47,6 +48,9 @@ const createMatchRecord = (
 // DB 레코드를 매치 정보로 변환
 const transformToMatchInfo = (record: MatchRecord): MatchInfoResponse =>
 	record.match_info;
+
+const transformToMatchInfoTimeline = (record: MatchRecord): TimelineDto =>
+	record.match_info_timeline;
 
 // 매치 레코드 배열에서 매치 ID Set 생성
 const createMatchIdSet = (records: MatchRecord[]): Set<string> =>
@@ -81,6 +85,7 @@ const loadExistingMatchData = async (
 		return {
 			matchIds: new Set(),
 			matchInfos: [],
+			matchInfoTimeline: [],
 			lastUpdated: null,
 		};
 	}
@@ -90,6 +95,7 @@ const loadExistingMatchData = async (
 	return {
 		matchIds: createMatchIdSet(matchRecords),
 		matchInfos: matchRecords.map(transformToMatchInfo),
+		matchInfoTimeline: matchRecords.map(transformToMatchInfoTimeline),
 		lastUpdated: getLastUpdated(matchRecords),
 	};
 };
@@ -158,7 +164,10 @@ export const getCachedMatchInfos = async (
 	mainGameName: string,
 	mainTagName: string,
 	requestCount = 50,
-): Promise<MatchInfoResponse[]> => {
+): Promise<{
+	matchInfos: MatchInfoResponse[];
+	matchTimelines: TimelineDto[];
+}> => {
 	try {
 		// 플레이어의 PUUID 가져오기
 		const { puuid } = await getRiotSummonerInfo(mainGameName, mainTagName);
@@ -176,33 +185,45 @@ export const getCachedMatchInfos = async (
 
 		// 새로운 매치가 없으면 기존 데이터 반환
 		if (newMatchIds.length === 0) {
-			return existingData.matchInfos;
+			return {
+				matchInfos: existingData.matchInfos,
+				matchTimelines: existingData.matchInfoTimeline,
+			};
 		}
 
 		// 새로운 매치 정보들을 Riot API에서 가져오기
-		const newMatchInfos = await fetchNewMatchInfos(newMatchIds);
-		const newMatches = newMatchIds.map((matchId, index) => ({
-			matchId,
-			matchInfo: newMatchInfos[index],
-		}));
+		const newMatchInfosArr = await fetchNewMatchInfos(newMatchIds);
+		const newTimelinesArr = await fetchNewTimelineMatchInfos(newMatchIds);
 
-		//Timeline 기준으로 매치 정보 가져오기
-		const newMatchTimelineInfos = await fetchNewTimelineMatchInfos(newMatchIds);
-		const newMatchTimelines = newMatchTimelineInfos.map((matchId, index) => ({
-			matchId: matchId.metadata.matchId,
-			matchInfo: newMatchTimelineInfos[index],
+		const newMatches = newMatchIds.map((id, i) => ({
+			matchId: id,
+			matchInfo: newMatchInfosArr[i],
+		}));
+		const newTimelines = newMatchIds.map((id, i) => ({
+			matchId: newTimelinesArr[i].metadata.matchId,
+			matchInfo: newTimelinesArr[i],
 		}));
 
 		// 새로운 매치 정보들을 데이터베이스에 저장
-		await saveNewMatchInfos(puuid, newMatches, newMatchTimelines);
+		await saveNewMatchInfos(puuid, newMatches, newTimelines);
 
-		// 새로운 매치와 기존 매치를 합쳐서 반환
-		const allMatchInfos = [...newMatchInfos, ...existingData.matchInfos];
+		// 합친 뒤 정렬
+		const combinedInfos = [
+			...existingData.matchInfos,
+			...newMatchInfosArr,
+		].sort((a, b) => b.info.gameCreation - a.info.gameCreation);
+		const combinedTimelines = [
+			...existingData.matchInfoTimeline,
+			...newTimelines.map((t) => t.matchInfo),
+		].sort(
+			(a, b) => b.metadata.matchId.localeCompare(a.metadata.matchId), // matchId 기준 혹은 timestamp 기준으로 정렬
+		);
 
 		// 게임 생성 시간 기준으로 최신순 정렬하여 반환
-		return allMatchInfos.sort(
-			(a, b) => b.info.gameCreation - a.info.gameCreation,
-		);
+		return {
+			matchInfos: combinedInfos,
+			matchTimelines: combinedTimelines,
+		};
 	} catch (error) {
 		console.error("getCachedMatchInfos 에러:", error);
 		throw error;
