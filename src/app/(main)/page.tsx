@@ -58,8 +58,6 @@ export default async function Home() {
 			return acc;
 		}, {});
 
-	console.log("matchInfos = ", matchInfos[0]);
-
 	// 최근 3개 매치 참가자 목록 준비(화면에 3개만 보여주기 위함)
 	const participantsList = matchInfos.slice(0, 3).map((mi) =>
 		mi.info.participants.map((p) => ({
