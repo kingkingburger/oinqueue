@@ -1,7 +1,10 @@
 import { getMatchInfo } from "@/lib/riotApi/getMatchInfo";
 import { getMatchList } from "@/lib/riotApi/getMatchList";
+import { getMatchTimeLineInfo } from "@/lib/riotApi/getMatchTimeline";
 import { getRiotSummonerInfo } from "@/lib/riotApi/getRiotSummonerInfo";
 import type { MatchInfoResponse } from "@/lib/riotApi/type/matchInfoResponse";
+
+import type { TimelineDto } from "@/lib/riotApi/type/mathInfoTimeLineResponse";
 import { createClient } from "@supabase/supabase-js";
 
 // Supabase 클라이언트 설정
@@ -15,6 +18,7 @@ interface MatchRecord {
 	puuid: string;
 	match_id: string;
 	match_info: MatchInfoResponse;
+	match_info_timeline: TimelineDto;
 	game_creation: number;
 	created_at: string;
 	updated_at: string;
@@ -31,10 +35,12 @@ const createMatchRecord = (
 	puuid: string,
 	matchId: string,
 	matchInfo: MatchInfoResponse,
+	matchInfoTimeline: { matchId: string; matchInfo: TimelineDto },
 ): Omit<MatchRecord, "id" | "created_at" | "updated_at"> => ({
 	puuid,
 	match_id: matchId,
 	match_info: matchInfo,
+	match_info_timeline: matchInfoTimeline.matchInfo,
 	game_creation: matchInfo.info.gameCreation,
 });
 
@@ -92,16 +98,23 @@ const loadExistingMatchData = async (
  * 새로운 매치 정보들을 데이터베이스에 저장
  * @param puuid 플레이어의 고유 식별자
  * @param newMatches 저장할 새로운 매치 정보들
+ * @param newMatchTimelines
  */
 const saveNewMatchInfos = async (
 	puuid: string,
-	newMatches: Array<{ matchId: string; matchInfo: MatchInfoResponse }>,
+	newMatches: { matchId: string; matchInfo: MatchInfoResponse }[],
+	newMatchTimelines: { matchId: string; matchInfo: TimelineDto }[],
 ): Promise<void> => {
 	if (newMatches.length === 0) return;
 
-	const recordsToInsert = newMatches.map(({ matchId, matchInfo }) =>
-		createMatchRecord(puuid, matchId, matchInfo),
-	);
+	const recordsToInsert = newMatches.map(({ matchId, matchInfo }) => {
+		const timelineEntry = newMatchTimelines.find((t) => t.matchId === matchId);
+		if (!timelineEntry) {
+			// 타임라인이 없으면 건너뛰거나, 기본값을 설정할 수 있어요
+			throw new Error(`타임라인 정보가 없습니다: ${matchId}`);
+		}
+		return createMatchRecord(puuid, matchId, matchInfo, timelineEntry);
+	});
 
 	const { error } = await supabase.from("match_cache").upsert(recordsToInsert);
 
@@ -119,6 +132,15 @@ const saveNewMatchInfos = async (
 const fetchNewMatchInfos = async (
 	newMatchIds: string[],
 ): Promise<MatchInfoResponse[]> => Promise.all(newMatchIds.map(getMatchInfo));
+
+/**
+ * Riot API에서 새로운 매치 Timeline 정보를 가져옴
+ * @param newMatchIds 가져올 매치 ID 목록
+ * @returns 매치 정보 배열
+ */
+const fetchNewTimelineMatchInfos = async (
+	newMatchIds: string[],
+): Promise<TimelineDto[]> => Promise.all(newMatchIds.map(getMatchTimeLineInfo));
 
 // 메인 함수
 
@@ -164,8 +186,15 @@ export const getCachedMatchInfos = async (
 			matchInfo: newMatchInfos[index],
 		}));
 
+		//Timeline 기준으로 매치 정보 가져오기
+		const newMatchTimelineInfos = await fetchNewTimelineMatchInfos(newMatchIds);
+		const newMatchTimelines = newMatchTimelineInfos.map((matchId, index) => ({
+			matchId: matchId.metadata.matchId,
+			matchInfo: newMatchTimelineInfos[index],
+		}));
+
 		// 새로운 매치 정보들을 데이터베이스에 저장
-		await saveNewMatchInfos(puuid, newMatches);
+		await saveNewMatchInfos(puuid, newMatches, newMatchTimelines);
 
 		// 새로운 매치와 기존 매치를 합쳐서 반환
 		const allMatchInfos = [...newMatchInfos, ...existingData.matchInfos];
