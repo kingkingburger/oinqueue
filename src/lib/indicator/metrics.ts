@@ -199,7 +199,7 @@ export function computeSummonerMetrics(
 		// KDA 관련
 		{
 			key: "kda",
-			label: "인원",
+			label: "인분",
 			value: kda,
 			note: `승률 ${(totals.kills / games).toFixed(1)}/${(totals.deaths / games).toFixed(1)}/${(totals.assists / games).toFixed(1)}`,
 			summonerName: summonerName,

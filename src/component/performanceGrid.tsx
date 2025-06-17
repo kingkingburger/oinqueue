@@ -1,4 +1,7 @@
+"use client";
+
 import type React from "react";
+import { useMemo } from "react";
 
 interface Metric {
 	key: string;
@@ -13,51 +16,59 @@ interface Props {
 	metrics: Metric[];
 }
 
+/**
+ * PerformanceGrid
+ *  - 각 소환사별로 Metric 을 그룹화하여 카드 형태로 표시합니다.
+ *  - metric 이 많아져도 자동으로 래핑되는 CSS Grid( auto‑fill,minmax )를 사용합니다.
+ *  - highlight 가 true 인 항목은 ring 과 shadow 로 강조합니다.
+ */
 export const PerformanceGrid: React.FC<Props> = ({ metrics }) => {
-	const groupedMap = metrics.reduce<Map<string, Metric[]>>((map, m) => {
-		const name = m.summonerName;
-		if (!map.has(name)) {
-			map.set(name, []);
-		}
-		map.get(name)?.push(m);
-		return map;
-	}, new Map());
+	// 소환사 이름 기준으로 Metric 배열을 그룹화 (메모이제이션으로 렌더 최적화)
+	const groupedMap = useMemo(() => {
+		return metrics.reduce<Map<string, Metric[]>>((map, metric) => {
+			const summonerName = metric.summonerName;
+			if (!map.has(summonerName)) {
+				map.set(summonerName, []);
+			}
+			map.get(summonerName)?.push(metric);
+			return map;
+		}, new Map());
+	}, [metrics]);
 
 	return (
-		<div className="inline-flex p-4 text-gray-800">
+		<div className="flex flex-wrap gap-6 p-4 text-gray-800">
 			{Array.from(groupedMap.entries()).map(([summonerName, groupMetrics]) => (
-				<div key={summonerName} className="bg-white p-6 rounded-2xl shadow-md">
+				<section
+					key={summonerName}
+					className="flex-grow basis-80 bg-white p-6 rounded-2xl shadow-md"
+				>
 					{/* 소환사 이름 */}
-					<h2 className="text-center text-2xl font-semibold mb-4">
+					<h2 className="text-center text-xl font-semibold mb-6">
 						{summonerName}
 					</h2>
 
-					{/* 항상 2열 그리드: 데스크탑도 모바일처럼 */}
-					<div className="grid grid-cols-2 gap-4">
+					{/* 가변 폭 그리드: metric 개수가 늘어나도 자동 줄바꿈 */}
+					<div className="grid gap-3 [grid-template-columns:repeat(auto-fill,minmax(120px,1fr))]">
 						{groupMetrics.map((m) => (
-							<div
+							<article
 								key={m.key}
-								className={`
-                    flex flex-col items-center justify-center p-4
-                    bg-gray-50 rounded-xl
-                    ${
-											m.highlight
-												? "ring-2 ring-rose-400/60 shadow-lg"
-												: "shadow-sm"
-										}
-                  `}
+								className={`flex flex-col items-center justify-center p-3 bg-gray-50 rounded-xl ${
+									m.highlight
+										? "ring-2 ring-rose-400/60 shadow-lg"
+										: "shadow-sm"
+								}`}
 							>
-								<span className="text-2xl font-bold">{m.value}</span>
+								<span className="text-lg font-bold">{m.value}</span>
 								<span className="text-sm text-muted-foreground">{m.label}</span>
 								{m.note && (
-									<span className="text-xs text-muted-foreground mt-1">
+									<span className="text-xs text-muted-foreground mt-0.5">
 										{m.note}
 									</span>
 								)}
-							</div>
+							</article>
 						))}
 					</div>
-				</div>
+				</section>
 			))}
 		</div>
 	);
