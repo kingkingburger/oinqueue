@@ -6,8 +6,8 @@ import RecentMatches from "@/component/recentMatches";
 import { RecommendedCompositions } from "@/component/recommendedComposition";
 import SummonerRateList from "@/component/summonerList";
 import { mainGameName, mainNames, mainTagName } from "@/constant/basic";
+import { computeSummonerMetrics } from "@/lib/indicator/metrics";
 import { getCachedMatchInfos } from "@/lib/matchDataManager";
-import { computeSummonerMetrics } from "@/lib/metrics";
 import { getTierListFromPs } from "@/lib/topTierData/fromPs";
 import Link from "next/link";
 import { FaYoutube } from "react-icons/fa";
@@ -34,8 +34,9 @@ export default async function Home() {
 	const originalMathInfo = allMatchInfos.matchInfos;
 	// db에 있는 timeline match 정보
 	const timelineMatchInfo = allMatchInfos.matchTimelines;
+
 	// 매치 데이터의 matchId만 추출
-	const top10MatchIds = originalMathInfo.map((match) => match.metadata.matchId);
+	const matchIdsInDb = originalMathInfo.map((match) => match.metadata.matchId);
 
 	// 소환사의 챔피언별 승리, 토탈 계산
 	const perSummonerStats: PerSummonerStats = originalMathInfo
@@ -149,7 +150,7 @@ export default async function Home() {
 				<div className="col-span-12">
 					<RecentMatches
 						participantsList={participantsList}
-						matchIds={top10MatchIds}
+						matchIds={matchIdsInDb}
 					/>
 				</div>
 			</div>
