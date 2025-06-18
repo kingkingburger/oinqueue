@@ -110,3 +110,53 @@ export const calculateDamageTakenGrade = (damageTaken: number): string => {
 	if (damageTaken >= 10000) return "C+";
 	return "C";
 };
+
+// 등급을 숫자로 변환하는 함수
+export const gradeToNumber = (grade: string): number => {
+	const gradeMap: Record<string, number> = {
+		SSS: 100,
+		SS: 90,
+		"S+": 85,
+		S: 80,
+		"A+": 75,
+		A: 70,
+		"B+": 65,
+		B: 60,
+		"C+": 55,
+		C: 50,
+		D: 40,
+		F: 30,
+	};
+	return gradeMap[grade] || 50;
+};
+
+// 백분율을 숫자로 변환하는 함수
+export const percentToNumber = (percent: string): number => {
+	return Number.parseFloat(percent.replace("%", ""));
+};
+
+// 값을 0-100 스케일로 정규화하는 함수
+export const normalizeValue = (value: string, key: string): number => {
+	const numValue = Number.parseFloat(value);
+
+	switch (key) {
+		case "kda":
+		case "kda_ratio":
+			return Math.min(numValue * 20, 100); // KDA 5.0을 100으로 설정
+		case "kill_count":
+		case "damage_share":
+			return Math.min(numValue * 10, 100); // 10킬/어시스트를 100으로 설정
+		case "death_count":
+			return Math.max(100 - numValue * 15, 0); // 데스는 낮을수록 좋음
+		case "solo_kill":
+			return Math.min(numValue * 30, 100); // 솔킬 3개를 100으로 설정
+		case "avg_cs":
+			return Math.min(numValue / 3, 100); // CS 300을 100으로 설정
+		case "vision_score":
+			return Math.min(numValue * 2.5, 100); // 시야점수 40을 100으로 설정
+		case "ward_efficiency":
+			return Math.min(numValue * 100, 100); // 제어와드 1개를 100으로 설정
+		default:
+			return numValue;
+	}
+};
