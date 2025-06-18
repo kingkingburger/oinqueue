@@ -34,6 +34,17 @@ interface ChartRadarDotsProps {
 	groupMetrics: Metric[];
 }
 
+const ChartTooltipContent = (data: ChartData) => {
+	return (
+		<div className="bg-white p-3 border rounded shadow-lg">
+			<p className="font-semibold">{data.metric}</p>
+			<p className="text-blue-600">점수: {data.value.toFixed(1)}/100</p>
+			<p className="text-sm text-gray-600">실제값: {data.originalValue}</p>
+			<p className="text-sm text-gray-500">{data.note}</p>
+		</div>
+	);
+};
+
 export function ChartRadarDots({ groupMetrics }: ChartRadarDotsProps) {
 	// 주요 지표만 선별하여 차트 데이터 생성
 	const getChartData = (): ChartData[] => {
@@ -104,18 +115,7 @@ export function ChartRadarDots({ groupMetrics }: ChartRadarDotsProps) {
 							content={({ active, payload }) => {
 								if (active && payload && payload.length) {
 									const data = payload[0].payload as ChartData;
-									return (
-										<div className="bg-white p-3 border rounded shadow-lg">
-											<p className="font-semibold">{data.metric}</p>
-											<p className="text-blue-600">
-												점수: {data.value.toFixed(1)}/100
-											</p>
-											<p className="text-sm text-gray-600">
-												실제값: {data.originalValue}
-											</p>
-											<p className="text-sm text-gray-500">{data.note}</p>
-										</div>
-									);
+									return ChartTooltipContent(data);
 								}
 								return null;
 							}}
