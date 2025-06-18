@@ -1,4 +1,4 @@
-import { ChartRadarDots } from "@/component/chart-radar-dots";
+import { ChartRadarDots } from "@/components/chart-radar-dots";
 import type React from "react";
 
 interface Metric {
