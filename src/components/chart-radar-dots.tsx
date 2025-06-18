@@ -6,7 +6,6 @@ import { PolarAngleAxis, PolarGrid, Radar, RadarChart } from "recharts";
 import {
 	Card,
 	CardContent,
-	CardDescription,
 	CardFooter,
 	CardHeader,
 	CardTitle,
@@ -15,7 +14,6 @@ import {
 	type ChartConfig,
 	ChartContainer,
 	ChartTooltip,
-	ChartTooltipContent,
 } from "@/components/ui/chart";
 import {
 	gradeToNumber,
@@ -24,15 +22,6 @@ import {
 } from "@/lib/indicator/calculateGrade";
 import type { Metric } from "@/lib/indicator/metrics";
 import type { ChartData } from "@/lib/indicator/types/radarCharData";
-
-const chartData = [
-	{ month: "January", desktop: 186 },
-	{ month: "February", desktop: 305 },
-	{ month: "March", desktop: 237 },
-	{ month: "April", desktop: 273 },
-	{ month: "May", desktop: 209 },
-	{ month: "June", desktop: 214 },
-];
 
 const chartConfig = {
 	desktop: {
