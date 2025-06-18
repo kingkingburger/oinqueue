@@ -10,12 +10,18 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.50.0",
+    "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "ky": "^1.8.1",
+    "lucide-react": "^0.516.0",
+    "msw": "^2.10.2",
     "next": "15.3.3",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "react-icons": "^5.5.0"
+    "react-icons": "^5.5.0",
+    "recharts": "^2.15.3",
+    "shadcn": "^2.6.4",
+    "tailwind-merge": "^3.3.1"
   },
   "devDependencies": {
     "@biomejs/biome": "1.9.4",
@@ -24,6 +30,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "tailwindcss": "^4",
+    "tw-animate-css": "^1.3.4",
     "typescript": "^5"
   }
 }
