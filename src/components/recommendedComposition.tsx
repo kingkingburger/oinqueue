@@ -12,7 +12,7 @@
 
 "use client";
 
-import type { PerSummonerStats } from "@/component/summonerList";
+import type { PerSummonerStats } from "@/components/summonerList";
 import { calculateProficiency } from "@/lib/calculateProficiency";
 import { convertChampionNameToKr } from "@/lib/convertChampionName";
 import type { TierListItem } from "@/lib/topTierData/types";

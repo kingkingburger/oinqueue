@@ -1,13 +1,6 @@
+import { ChartRadarDots } from "@/components/chart-radar-dots";
+import type { Metric } from "@/lib/indicator/metrics";
 import type React from "react";
-
-interface Metric {
-	key: string;
-	summonerName: string;
-	value: number | string;
-	label: string;
-	note?: string;
-	highlight?: boolean;
-}
 
 interface Props {
 	metricsList: Metric[][];
@@ -29,7 +22,8 @@ export const PerformanceGrid: React.FC<Props> = ({ metricsList }) => {
 						key={summonerName}
 						className="flex-none w-full sm:w-96 max-w-full bg-white p-6 rounded-2xl shadow-md"
 					>
-						<h2 className="text-center text-xl font-semibold mb-6">
+						<ChartRadarDots groupMetrics={groupMetrics} />
+						<h2 className="text-center text-xl font-semibold mb-6 p-1">
 							{summonerName}
 						</h2>
 						<div className="grid gap-3 [grid-template-columns:repeat(auto-fill,minmax(120px,1fr))]">

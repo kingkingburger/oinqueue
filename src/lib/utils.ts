@@ -1,4 +1,10 @@
+import { type ClassValue, clsx } from "clsx";
 import ky, { type HTTPError } from "ky";
+import { twMerge } from "tailwind-merge";
+
+export function cn(...inputs: ClassValue[]) {
+	return twMerge(clsx(inputs));
+}
 
 // 1) 환경변수 이름을 실제 역할에 맞게 교정
 // riotApiUrl: Riot API의 기본 URL
