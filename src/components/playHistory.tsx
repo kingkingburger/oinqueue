@@ -1,4 +1,6 @@
 import { convertChampionNameToKr } from "@/lib/convertChampionName";
+import { getChampionImage } from "@/lib/getChampionImage";
+import Image from "next/image";
 import React from "react";
 
 type Participant = {
@@ -36,13 +38,19 @@ export const PlayHistory = ({ participants }: PlayHistoryProps) => {
 					className="
             flex-shrink-0
             w-10 h-10 sm:w-12 sm:h-12
-            bg-amber-600
+            {/*bg-amber-600*/}
             flex items-center justify-center
             text-white font-semibold text-sm
           "
 				>
+					{/*<Image*/}
+					{/*	alt="playHistorys"*/}
+					{/*	src={getChampionImage(participant.championName)}*/}
+					{/*	width={50}*/}
+					{/*	height={50}*/}
+					{/*/>*/}
 					{convertChampionNameToKr(participant.championName)}
-					{participant.championName}
+					{/*{participant.championName}*/}
 				</div>
 
 				{/* 소환사 이름 + KDA */}
