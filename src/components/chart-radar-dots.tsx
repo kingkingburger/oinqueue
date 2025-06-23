@@ -45,7 +45,7 @@ const ChartTooltipContent = (data: ChartData) => {
 	);
 };
 
-export function ChartRadarDots({ groupMetrics }: ChartRadarDotsProps) {
+export const ChartRadarDots = ({ groupMetrics }: ChartRadarDotsProps) => {
 	// 주요 지표만 선별하여 차트 데이터 생성
 	const getChartData = (): ChartData[] => {
 		const keyMetrics: string[] = [
@@ -152,4 +152,4 @@ export function ChartRadarDots({ groupMetrics }: ChartRadarDotsProps) {
 			</CardFooter>
 		</Card>
 	);
-}
+};
