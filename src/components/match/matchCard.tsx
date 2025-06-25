@@ -1,4 +1,4 @@
-import { PlayHistory } from "@/components/playHistory";
+import { PlayHistory } from "@/components/match/playHistory";
 import type React from "react";
 
 type MatchCardProps = {

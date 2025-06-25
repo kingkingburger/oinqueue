@@ -1,6 +1,6 @@
-import { ChartRadarDots } from "@/components/chart-radar-dots";
 import type { Metric } from "@/lib/indicator/metrics";
 import type React from "react";
+import {ChartRadarDots} from "@/components/indicator/chartRadarDots";
 
 interface Props {
 	metricsList: Metric[][];

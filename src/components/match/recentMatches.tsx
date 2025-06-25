@@ -1,4 +1,4 @@
-import MatchCard from "@/components/matchCard";
+import MatchCard from "@/components/match/matchCard";
 import type React from "react";
 
 type RecentMatchesProps = {

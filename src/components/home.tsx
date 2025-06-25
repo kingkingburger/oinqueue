@@ -1,8 +1,8 @@
-import { LolpsTierList } from "@/components/lolpsTierList";
-import { PerformanceGrid } from "@/components/performanceGrid";
-import RecentMatches from "@/components/recentMatches";
-import { RecommendedCompositions } from "@/components/recommendedComposition";
-import SummonerRateList from "@/components/summonerList";
+import { LolpsTierList } from "@/components/lolps/lolpsTierList";
+import RecentMatches from "@/components/match/recentMatches";
+import { PerformanceGrid } from "@/components/indicator/performanceGrid";
+import { RecommendedCompositions } from "@/components/recommned/recommendedComposition";
+import SummonerRateList from "@/components/summonerRate/summonerList";
 import { mainGameName, mainNames, mainTagName } from "@/constant/basic";
 import { computeSummonerMetrics } from "@/lib/indicator/metrics";
 import { getCachedMatchInfos } from "@/lib/matchDataManager";
