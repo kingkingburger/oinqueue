@@ -20,7 +20,7 @@ export const PerformanceGrid: React.FC<Props> = ({ metricsList }) => {
 				return (
 					<section
 						key={summonerName}
-						className="flex-none w-full sm:w-96 max-w-full bg-white p-6 rounded-2xl shadow-md"
+						className="w-full sm:w-96 max-w-full bg-white p-6 rounded-2xl shadow-md"
 					>
 						<ChartRadarDots groupMetrics={groupMetrics} />
 						<h2 className="text-center text-xl font-semibold mb-6 p-1">
