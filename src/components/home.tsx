@@ -2,7 +2,6 @@ import { PerformanceGrid } from "@/components/indicator/performanceGrid";
 import { LolpsTierList } from "@/components/lolps/lolpsTierList";
 import RecentMatches from "@/components/match/recentMatches";
 import { RecommendedCompositions } from "@/components/recommned/recommendedComposition";
-import { ReloadMatchButton } from "@/components/reloadMatchButton";
 import SummonerRateList from "@/components/summonerRate/summonerList";
 import { mainGameName, mainNames, mainTagName } from "@/constant/basic";
 import { computeSummonerMetrics } from "@/lib/indicator/metrics";
@@ -117,7 +116,6 @@ export default async function HomeContent() {
 					<h1 className="text-2xl font-semibold text-gray-800 mb-2">
 						오늘의 추천조합
 					</h1>
-					<ReloadMatchButton />
 					<RecommendedCompositions
 						perSummonerStats={perSummonerStats}
 						top5TierList={top5TierList}
