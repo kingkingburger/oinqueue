@@ -1,7 +1,5 @@
 import { calculateProficiency } from "@/lib/calculateProficiency";
 import { convertChampionNameToKr } from "@/lib/convertChampionName";
-import { getChampionImage } from "@/lib/getChampionImage";
-import Image from "next/image";
 import type React from "react";
 
 export type ChampionStats = { wins: number; total: number };
