@@ -20,6 +20,7 @@ export const getMatchList = async ({
 					count: `${count}`,
 					type: "ranked",
 				},
+				cache: "no-store",
 			},
 		)
 		.json();
