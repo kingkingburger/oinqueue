@@ -175,6 +175,19 @@ export const getCachedMatchInfos = async (
 		// 기존 캐시된 매치 데이터 로드
 		const existingData = await loadExistingMatchData(puuid);
 
+		// 마지막 업데이트 시간 확인 (15분 이내에는 API 호출 방지)
+		const fifteenMinutes = 15 * 60 * 1000;
+		if (
+			existingData.lastUpdated &&
+			new Date().getTime() - new Date(existingData.lastUpdated).getTime() <
+				fifteenMinutes
+		) {
+			return {
+				matchInfos: existingData.matchInfos,
+				matchTimelines: existingData.matchInfoTimeline,
+			};
+		}
+
 		// Riot API에서 최신 매치 ID 목록 가져오기
 		const allMatchIds = await getMatchList({ puuid, count: requestCount });
 
