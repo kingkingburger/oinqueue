@@ -22,12 +22,26 @@ export default async function HomeContent() {
 	// ───────────────────────────────────────────────────────────
 
 	const matchCount = 50;
-	// 캐시된 매치 데이터 가져오기 (새로운 매치만 API 요청)
-	const allMatchInfos = await getCachedMatchInfos(
-		mainGameName,
-		mainTagName,
-		matchCount,
-	);
+	const lolPsVersion = process.env.NEXT_PUBLIC_LOL_PS_VERSION;
+
+	// lol.ps API 요청 파라미터
+	const lolpsParams = Array.from({ length: 5 }, (_, idx) => ({
+		region: 0,
+		version: Number(lolPsVersion),
+		tier: 1,
+		lane: idx,
+	}));
+
+	// 데이터 요청 병렬 처리
+	const [allMatchInfos, top5TierList] = await Promise.all([
+		getCachedMatchInfos(mainGameName, mainTagName, matchCount),
+		Promise.all(
+			lolpsParams.map(async (param) => {
+				const { data } = await getTierListFromPs(param);
+				return data.slice(0, 5);
+			}),
+		),
+	]);
 
 	// db에 있는 match 정보
 	const originalMathInfo = allMatchInfos.matchInfos;
@@ -74,24 +88,6 @@ export default async function HomeContent() {
 		})),
 	);
 
-	// lolps api로 각 라인의 챔피언 승률 5개 가져오기
-	const lolPsVersion = process.env.NEXT_PUBLIC_LOL_PS_VERSION;
-	// 요청 파라미터 배열 생성
-	const params = Array.from({ length: 5 }, (_, idx) => ({
-		region: 0,
-		version: Number(lolPsVersion),
-		tier: 1,
-		lane: idx,
-	}));
-
-	// lolps api 요청해서 1티어 데이터 가져오기
-	const top5TierList = await Promise.all(
-		params.map(async (param) => {
-			const { data } = await getTierListFromPs(param);
-			return data.slice(0, 5);
-		}),
-	);
-
 	// 우리팀의 지표 계산
 	const teamMatric = mainNames.map((name) =>
 		computeSummonerMetrics(originalMathInfo, timelineMatchInfo, name),
@@ -130,7 +126,7 @@ export default async function HomeContent() {
 				{/* 챔피언 승률, 숙련도 요약 */}
 				<div className="col-span-12">
 					<h1 className="text-2xl font-semibold text-gray-800 mb-2">
-						최근 {matchCount}게임
+						최근 {matchCount}게임 (숙련도 기준)
 					</h1>
 					<SummonerRateList perSummonerStats={perSummonerStats} />
 				</div>
