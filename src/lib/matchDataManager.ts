@@ -157,21 +157,18 @@ const fetchNewTimelineMatchInfos = async (
  *
  * @param mainGameName 게임 내 닉네임
  * @param mainTagName 태그 이름 (예: KR1)
+ * @param puuid riot에서 고유값으로 사용하는 puuid
  * @param requestCount 요청할 매치 개수 (기본값: 50)
  * @returns 최신순으로 정렬된 매치 정보 배열
  */
 export const getCachedMatchInfos = async (
-	mainGameName: string,
-	mainTagName: string,
+	puuid: string,
 	requestCount = 50,
 ): Promise<{
 	matchInfos: MatchInfoResponse[];
 	matchTimelines: TimelineDto[];
 }> => {
 	try {
-		// 플레이어의 PUUID 가져오기
-		const { puuid } = await getRiotSummonerInfo(mainGameName, mainTagName);
-
 		// 기존 캐시된 매치 데이터 로드
 		const existingData = await loadExistingMatchData(puuid);
 
