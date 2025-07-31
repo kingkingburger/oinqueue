@@ -6,6 +6,7 @@ import SummonerRateList from "@/components/summonerRate/summonerList";
 import { mainGameName, mainNames, mainTagName } from "@/constant/basic";
 import { computeSummonerMetrics } from "@/lib/indicator/metrics";
 import { getCachedMatchInfos } from "@/lib/matchDataManager";
+import { getRiotSummonerInfo } from "@/lib/riotApi/getRiotSummonerInfo";
 import { getTierListFromPs } from "@/lib/topTierData/fromPs";
 import Link from "next/link";
 import React from "react";
@@ -32,9 +33,16 @@ export default async function HomeContent() {
 		lane: idx,
 	}));
 
+	// 플레이어의 PUUID 가져오기
+	const { puuid } = await getRiotSummonerInfo(mainGameName, mainTagName);
+
+	if (!puuid) {
+		throw Error("puuid를 받아오지 못했습니다");
+	}
+
 	// 데이터 요청 병렬 처리
 	const [allMatchInfos, top5TierList] = await Promise.all([
-		getCachedMatchInfos(mainGameName, mainTagName, matchCount),
+		getCachedMatchInfos(puuid, matchCount),
 		Promise.all(
 			lolpsParams.map(async (param) => {
 				const { data } = await getTierListFromPs(param);

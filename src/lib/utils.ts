@@ -12,7 +12,7 @@ export function cn(...inputs: ClassValue[]) {
 export const riotApiUrl = process.env.NEXT_PUBLIC_RIOT_API_URL;
 export const riotApiKey = process.env.NEXT_PUBLIC_RIOT_API_KEY;
 
-export const useRiotApiEngine = () =>
+export const useRiotApiEngine = (cacheStrategy: RequestCache = "default") =>
 	ky.create({
 		prefixUrl: riotApiUrl,
 		timeout: 10000,
@@ -20,6 +20,8 @@ export const useRiotApiEngine = () =>
 		searchParams: {
 			api_key: riotApiKey || "",
 		},
+		// 여기에 cache 옵션 추가
+		cache: cacheStrategy, // "default", "no-cache", "reload", "force-cache", "only-if-cached", "no-store" 중 하나
 		hooks: {
 			beforeError: [
 				async (error: HTTPError<unknown>) => {
