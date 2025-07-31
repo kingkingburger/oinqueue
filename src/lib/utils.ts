@@ -20,7 +20,6 @@ export const useRiotApiEngine = (cacheStrategy: RequestCache = "default") =>
 		searchParams: {
 			api_key: riotApiKey || "",
 		},
-		// 여기에 cache 옵션 추가
 		cache: cacheStrategy, // "default", "no-cache", "reload", "force-cache", "only-if-cached", "no-store" 중 하나
 		hooks: {
 			beforeError: [

@@ -155,8 +155,6 @@ const fetchNewTimelineMatchInfos = async (
  * - 기존 캐시된 데이터와 새로운 매치를 비교하여 중복 없이 반환
  * - 새로운 매치가 있으면 자동으로 캐시에 저장
  *
- * @param mainGameName 게임 내 닉네임
- * @param mainTagName 태그 이름 (예: KR1)
  * @param puuid riot에서 고유값으로 사용하는 puuid
  * @param requestCount 요청할 매치 개수 (기본값: 50)
  * @returns 최신순으로 정렬된 매치 정보 배열

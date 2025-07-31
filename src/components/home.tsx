@@ -37,7 +37,9 @@ export default async function HomeContent() {
 	const { puuid } = await getRiotSummonerInfo(mainGameName, mainTagName);
 
 	if (!puuid) {
-		throw Error("puuid를 받아오지 못했습니다");
+		throw new Error(
+			`puuid를 받아오지 못했습니다. gameName: ${mainGameName}, tagName: ${mainTagName}`,
+		);
 	}
 
 	// 데이터 요청 병렬 처리
