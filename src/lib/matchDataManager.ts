@@ -135,25 +135,30 @@ const saveNewMatchInfos = async (
  * @param newMatchIds 가져올 매치 ID 목록
  * @returns 매치 정보 배열
  */
-const fetchNewMatchInfos = async (
-	newMatchIds: string[],
-): Promise<MatchInfoResponse[]> => Promise.all(newMatchIds.map(getMatchInfo));
+// const fetchNewMatchInfos = async (
+// 	newMatchIds: string[],
+// ): Promise<MatchInfoResponse[]> => Promise.all(newMatchIds.map(getMatchInfo));
 
 /**
  * Riot API에서 새로운 매치 Timeline 정보를 가져옴
  * @param newMatchIds 가져올 매치 ID 목록
  * @returns 매치 정보 배열
  */
-const fetchNewTimelineMatchInfos = async (
-	newMatchIds: string[],
-): Promise<TimelineDto[]> => Promise.all(newMatchIds.map(getMatchTimeLineInfo));
+// const fetchNewTimelineMatchInfos = async (
+// 	newMatchIds: string[],
+// ): Promise<TimelineDto[]> => Promise.all(newMatchIds.map(getMatchTimeLineInfo));
 
 // 메인 함수
 
 /**
- * 캐시된 매치 정보들을 가져오는 메인 함수
- * - 기존 캐시된 데이터와 새로운 매치를 비교하여 중복 없이 반환
- * - 새로운 매치가 있으면 자동으로 캐시에 저장
+ * 딜레이를 추가하는 헬퍼 함수
+ * @param ms 밀리초 단위
+ */
+const delay = (ms: number) => new Promise((res) => setTimeout(res, ms));
+
+/**
+ * 캐시된 매치 정보들을 가져오는 메인 함수 (최종 수정본)
+ * - getMatchInfo, getMatchTimeLineInfo를 직접 사용하여 API 속도 제한을 준수
  *
  * @param puuid riot에서 고유값으로 사용하는 puuid
  * @param requestCount 요청할 매치 개수 (기본값: 50)
@@ -167,10 +172,8 @@ export const getCachedMatchInfos = async (
 	matchTimelines: TimelineDto[];
 }> => {
 	try {
-		// 기존 캐시된 매치 데이터 로드
+		// 1. 기존 캐시 데이터 로드 및 업데이트 시간 확인
 		const existingData = await loadExistingMatchData(puuid);
-
-		// 마지막 업데이트 시간 확인 (15분 이내에는 API 호출 방지)
 		const fifteenMinutes = 15 * 60 * 1000;
 		if (
 			existingData.lastUpdated &&
@@ -183,15 +186,14 @@ export const getCachedMatchInfos = async (
 			};
 		}
 
-		// Riot API에서 최신 매치 ID 목록 가져오기
+		// 2. 최신 매치 ID 목록 가져오기
 		const allMatchIds = await getMatchList({ puuid, count: requestCount });
+		await delay(1200); // API 호출 후 잠시 대기
 
-		// 캐시에 없는 새로운 매치 ID만 필터링
 		const newMatchIds = allMatchIds.filter(
 			(id) => !existingData.matchIds.has(id),
 		);
 
-		// 새로운 매치가 없으면 기존 데이터 반환
 		if (newMatchIds.length === 0) {
 			return {
 				matchInfos: existingData.matchInfos,
@@ -199,27 +201,52 @@ export const getCachedMatchInfos = async (
 			};
 		}
 
-		// 새로운 매치 정보들을 Riot API에서 가져오기
-		const newMatchInfosArr = await fetchNewMatchInfos(newMatchIds);
-		const newTimelinesArr = await fetchNewTimelineMatchInfos(newMatchIds);
+		// 3. 새로운 매치 정보들을 '하나의 루프'에서 순차적으로 가져오기 (핵심 변경사항)
+		const newMatchInfosArr: MatchInfoResponse[] = [];
+		const newTimelinesArr: TimelineDto[] = [];
 
-		const newMatches = newMatchIds.map((id, i) => ({
-			matchId: id,
-			matchInfo: newMatchInfosArr[i],
+		for (const matchId of newMatchIds) {
+			try {
+				console.log(`- ${matchId} 데이터 가져오는 중...`);
+
+				// 매치 정보 가져오기
+				const matchInfo = await getMatchInfo(matchId);
+				newMatchInfosArr.push(matchInfo);
+				await delay(1200); // API 요청 속도 제한을 위한 딜레이 (필수)
+
+				// 타임라인 정보 가져오기
+				const timeline = await getMatchTimeLineInfo(matchId);
+				newTimelinesArr.push(timeline);
+				await delay(1200); // API 요청 속도 제한을 위한 딜레이 (필수)
+			} catch (err) {
+				console.error(
+					`- ${matchId} 처리 중 에러 발생, 다음으로 넘어갑니다:`,
+					err,
+				);
+				// 특정 매치에서 404(Not Found) 등 에러 발생 시 건너뛰고 계속 진행
+			}
+		}
+
+		// 4. 새 데이터를 DB 형식에 맞게 변환하고 저장
+		const newMatches = newMatchInfosArr.map((info) => ({
+			matchId: info.metadata.matchId,
+			matchInfo: info,
 		}));
-		const newTimelines = newMatchIds.map((id, i) => ({
-			matchId: newTimelinesArr[i].metadata.matchId,
-			matchInfo: newTimelinesArr[i],
+		const newTimelines = newTimelinesArr.map((timeline) => ({
+			matchId: timeline.metadata.matchId,
+			matchInfo: timeline,
 		}));
 
-		// 새로운 매치 정보들을 데이터베이스에 저장
-		await saveNewMatchInfos(puuid, newMatches, newTimelines);
+		if (newMatches.length > 0) {
+			await saveNewMatchInfos(puuid, newMatches, newTimelines);
+		}
 
-		// 합친 뒤 정렬
+		// 5. 기존 데이터와 새 데이터를 합쳐서 반환
 		const combinedInfos = [
 			...existingData.matchInfos,
 			...newMatchInfosArr,
 		].sort((a, b) => b.info.gameCreation - a.info.gameCreation);
+
 		const combinedTimelines = [
 			...existingData.matchInfoTimeline,
 			...newTimelines.map((t) => t.matchInfo),
@@ -227,13 +254,12 @@ export const getCachedMatchInfos = async (
 			(a, b) => b.metadata.matchId.localeCompare(a.metadata.matchId), // matchId 기준 혹은 timestamp 기준으로 정렬
 		);
 
-		// 게임 생성 시간 기준으로 최신순 정렬하여 반환
 		return {
 			matchInfos: combinedInfos,
 			matchTimelines: combinedTimelines,
 		};
 	} catch (error) {
-		console.error("getCachedMatchInfos 에러:", error);
+		console.error("getCachedMatchInfos 전역 에러:", error);
 		throw error;
 	}
 };
