@@ -1,9 +1,12 @@
+/**
+ * match 데이터를 가져오는 핵심 로직
+ */
+
 import { getMatchInfo } from "@/lib/riotApi/getMatchInfo";
 import { getMatchList } from "@/lib/riotApi/getMatchList";
 import { getMatchTimeLineInfo } from "@/lib/riotApi/getMatchTimeline";
 import { getRiotSummonerInfo } from "@/lib/riotApi/getRiotSummonerInfo";
 import type { MatchInfoResponse } from "@/lib/riotApi/type/matchInfoResponse";
-
 import type { TimelineDto } from "@/lib/riotApi/type/mathInfoTimeLineResponse";
 import { createClient } from "@supabase/supabase-js";
 
@@ -11,137 +14,6 @@ import { createClient } from "@supabase/supabase-js";
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY || "";
 const supabase = createClient(supabaseUrl, supabaseKey);
-
-// 데이터베이스 타입 정의
-interface MatchRecord {
-	id?: string;
-	puuid: string;
-	match_id: string;
-	match_info: MatchInfoResponse;
-	match_info_timeline: TimelineDto;
-	game_creation: number;
-	created_at?: string;
-	updated_at: string;
-}
-
-interface CachedMatchData {
-	matchIds: Set<string>;
-	matchInfos: MatchInfoResponse[];
-	matchInfoTimeline: TimelineDto[];
-	lastUpdated: string | null;
-}
-
-// 데이터 변환 유틸리티 함수들
-const createMatchRecord = (
-	puuid: string,
-	matchId: string,
-	matchInfo: MatchInfoResponse,
-	matchInfoTimeline: { matchId: string; matchInfo: TimelineDto },
-): Omit<MatchRecord, "id" | "created_at" | "updated_at"> => ({
-	puuid,
-	match_id: matchId,
-	match_info: matchInfo,
-	match_info_timeline: matchInfoTimeline.matchInfo,
-	game_creation: matchInfo.info.gameCreation,
-});
-
-// DB 레코드를 매치 정보로 변환
-const transformToMatchInfo = (record: MatchRecord): MatchInfoResponse =>
-	record.match_info;
-
-const transformToMatchInfoTimeline = (record: MatchRecord): TimelineDto =>
-	record.match_info_timeline;
-
-// 매치 레코드 배열에서 매치 ID Set 생성
-const createMatchIdSet = (records: MatchRecord[]): Set<string> =>
-	new Set(records.map((record) => record.match_id));
-
-// 레코드들 중 가장 최근 업데이트 시간 반환
-const getLastUpdated = (records: MatchRecord[]): string | null =>
-	records.length > 0
-		? Math.max(
-				...records.map((r) => new Date(r.updated_at).getTime()),
-			).toString()
-		: null;
-
-// 데이터베이스 접근 함수들
-
-/**
- * 기존 매치 데이터를 데이터베이스에서 로드
- * @param puuid 플레이어의 고유 식별자
- * @returns 캐시된 매치 데이터
- */
-const loadExistingMatchData = async (
-	puuid: string,
-): Promise<CachedMatchData> => {
-	const { data: records, error } = await supabase
-		.from("match_cache")
-		.select(
-			"puuid, match_id, match_info, match_info_timeline, game_creation, updated_at",
-		)
-		.eq("puuid", puuid)
-		.order("game_creation", { ascending: false });
-
-	if (error) {
-		console.error("매치 데이터 로드 실패:", error);
-		return {
-			matchIds: new Set(),
-			matchInfos: [],
-			matchInfoTimeline: [],
-			lastUpdated: null,
-		};
-	}
-
-	const matchRecords = records || [];
-
-	return {
-		matchIds: createMatchIdSet(matchRecords),
-		matchInfos: matchRecords.map(transformToMatchInfo),
-		matchInfoTimeline: matchRecords.map(transformToMatchInfoTimeline),
-		lastUpdated: getLastUpdated(matchRecords),
-	};
-};
-
-/**
- * [신규] 새로운 매치 데이터들을 DB에 한 번에 저장하는 함수
- * @param puuid
- * @param newMatchInfos
- * @param newTimelines
- */
-const saveNewMatchesToDB = async (
-	puuid: string,
-	newMatchInfos: MatchInfoResponse[],
-	newTimelines: TimelineDto[],
-) => {
-	// 타임라인 데이터를 matchId로 쉽게 찾을 수 있도록 Map으로 변환
-	const timelineMap = new Map(newTimelines.map((t) => [t.metadata.matchId, t]));
-
-	// DB에 insert할 row 배열 생성
-	const newRows = newMatchInfos.map((info) => {
-		const matchId = info.metadata.matchId;
-		const timeline = timelineMap.get(matchId);
-
-		// Supabase 테이블의 컬럼명에 맞게 객체를 구성합니다.
-		return {
-			puuid: puuid,
-			match_id: matchId,
-			match_info: info, // 'match_info' 컬럼에 JSON으로 저장
-			match_info_timeline: timeline, // 'match_info_timeline' 컬럼에 JSON으로 저장
-			game_creation: new Date(info.info.gameCreation), // 정렬을 위한 시간 정보
-		};
-	});
-
-	if (newRows.length === 0) return;
-
-	// Supabase에 한 번의 요청으로 모든 신규 데이터 insert
-	const { error } = await supabase.from("match_cache").insert(newRows);
-
-	if (error) {
-		console.error("새로운 매치 정보 저장 실패:", error);
-		// 필요하다면 에러를 throw하여 상위에서 처리
-		throw error;
-	}
-};
 
 // 메인 함수
 
@@ -311,4 +183,45 @@ const loadAllMatchDataFromDB = async (
 		matchInfos: data?.map((item) => item.match_info) || [],
 		matchTimelines: data?.map((item) => item.match_info_timeline) || [],
 	};
+};
+
+/**
+ * 새로운 매치 데이터들을 DB에 한 번에 저장하는 함수
+ * @param puuid
+ * @param newMatchInfos
+ * @param newTimelines
+ */
+const saveNewMatchesToDB = async (
+	puuid: string,
+	newMatchInfos: MatchInfoResponse[],
+	newTimelines: TimelineDto[],
+) => {
+	// 타임라인 데이터를 matchId로 쉽게 찾을 수 있도록 Map으로 변환
+	const timelineMap = new Map(newTimelines.map((t) => [t.metadata.matchId, t]));
+
+	// DB에 insert할 row 배열 생성
+	const newRows = newMatchInfos.map((info) => {
+		const matchId = info.metadata.matchId;
+		const timeline = timelineMap.get(matchId);
+
+		// Supabase 테이블의 컬럼명에 맞게 객체를 구성합니다.
+		return {
+			puuid: puuid,
+			match_id: matchId,
+			match_info: info, // 'match_info' 컬럼에 JSON으로 저장
+			match_info_timeline: timeline, // 'match_info_timeline' 컬럼에 JSON으로 저장
+			game_creation: new Date(info.info.gameCreation), // 정렬을 위한 시간 정보
+		};
+	});
+
+	if (newRows.length === 0) return;
+
+	// Supabase에 한 번의 요청으로 모든 신규 데이터 insert
+	const { error } = await supabase.from("match_cache").insert(newRows);
+
+	if (error) {
+		console.error("새로운 매치 정보 저장 실패:", error);
+		// 필요하다면 에러를 throw하여 상위에서 처리
+		throw error;
+	}
 };

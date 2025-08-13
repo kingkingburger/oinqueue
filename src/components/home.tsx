@@ -5,7 +5,7 @@ import { RecommendedCompositions } from "@/components/recommned/recommendedCompo
 import SummonerRateList from "@/components/summonerRate/summonerList";
 import { mainGameName, mainNames, mainTagName } from "@/constant/basic";
 import { computeSummonerMetrics } from "@/lib/indicator/metrics";
-import { getCachedMatchInfos } from "@/lib/matchDataManager";
+import { getCachedMatchInfos } from "@/lib/match/matchDataManager";
 import { getRiotSummonerInfo } from "@/lib/riotApi/getRiotSummonerInfo";
 import { getTierListFromPs } from "@/lib/topTierData/fromPs";
 import Link from "next/link";
