@@ -14,13 +14,13 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 
 // 데이터베이스 타입 정의
 interface MatchRecord {
-	id: string;
+	id?: string;
 	puuid: string;
 	match_id: string;
 	match_info: MatchInfoResponse;
 	match_info_timeline: TimelineDto;
 	game_creation: number;
-	created_at: string;
+	created_at?: string;
 	updated_at: string;
 }
 
@@ -76,7 +76,9 @@ const loadExistingMatchData = async (
 ): Promise<CachedMatchData> => {
 	const { data: records, error } = await supabase
 		.from("match_cache")
-		.select("*")
+		.select(
+			"puuid, match_id, match_info, match_info_timeline, game_creation, updated_at",
+		)
 		.eq("puuid", puuid)
 		.order("game_creation", { ascending: false });
 
@@ -101,52 +103,45 @@ const loadExistingMatchData = async (
 };
 
 /**
- * 새로운 매치 정보들을 데이터베이스에 저장
- * @param puuid 플레이어의 고유 식별자
- * @param newMatches 저장할 새로운 매치 정보들
- * @param newMatchTimelines
+ * [신규] 새로운 매치 데이터들을 DB에 한 번에 저장하는 함수
+ * @param puuid
+ * @param newMatchInfos
+ * @param newTimelines
  */
-const saveNewMatchInfos = async (
+const saveNewMatchesToDB = async (
 	puuid: string,
-	newMatches: { matchId: string; matchInfo: MatchInfoResponse }[],
-	newMatchTimelines: { matchId: string; matchInfo: TimelineDto }[],
-): Promise<void> => {
-	if (newMatches.length === 0) return;
+	newMatchInfos: MatchInfoResponse[],
+	newTimelines: TimelineDto[],
+) => {
+	// 타임라인 데이터를 matchId로 쉽게 찾을 수 있도록 Map으로 변환
+	const timelineMap = new Map(newTimelines.map((t) => [t.metadata.matchId, t]));
 
-	const recordsToInsert = newMatches.map(({ matchId, matchInfo }) => {
-		const timelineEntry = newMatchTimelines.find((t) => t.matchId === matchId);
-		if (!timelineEntry) {
-			// 타임라인이 없으면 건너뛰거나, 기본값을 설정할 수 있어요
-			throw new Error(`타임라인 정보가 없습니다: ${matchId}`);
-		}
-		return createMatchRecord(puuid, matchId, matchInfo, timelineEntry);
+	// DB에 insert할 row 배열 생성
+	const newRows = newMatchInfos.map((info) => {
+		const matchId = info.metadata.matchId;
+		const timeline = timelineMap.get(matchId);
+
+		// Supabase 테이블의 컬럼명에 맞게 객체를 구성합니다.
+		return {
+			puuid: puuid,
+			match_id: matchId,
+			match_info: info, // 'match_info' 컬럼에 JSON으로 저장
+			match_info_timeline: timeline, // 'match_info_timeline' 컬럼에 JSON으로 저장
+			game_creation: new Date(info.info.gameCreation), // 정렬을 위한 시간 정보
+		};
 	});
 
-	const { error } = await supabase.from("match_cache").upsert(recordsToInsert);
+	if (newRows.length === 0) return;
+
+	// Supabase에 한 번의 요청으로 모든 신규 데이터 insert
+	const { error } = await supabase.from("match_cache").insert(newRows);
 
 	if (error) {
-		console.error("매치 데이터 저장 실패:", error);
-		throw new Error(`매치 데이터 저장 실패: ${error.message}`);
+		console.error("새로운 매치 정보 저장 실패:", error);
+		// 필요하다면 에러를 throw하여 상위에서 처리
+		throw error;
 	}
 };
-
-/**
- * Riot API에서 새로운 매치 정보들을 가져옴
- * @param newMatchIds 가져올 매치 ID 목록
- * @returns 매치 정보 배열
- */
-// const fetchNewMatchInfos = async (
-// 	newMatchIds: string[],
-// ): Promise<MatchInfoResponse[]> => Promise.all(newMatchIds.map(getMatchInfo));
-
-/**
- * Riot API에서 새로운 매치 Timeline 정보를 가져옴
- * @param newMatchIds 가져올 매치 ID 목록
- * @returns 매치 정보 배열
- */
-// const fetchNewTimelineMatchInfos = async (
-// 	newMatchIds: string[],
-// ): Promise<TimelineDto[]> => Promise.all(newMatchIds.map(getMatchTimeLineInfo));
 
 // 메인 함수
 
@@ -172,33 +167,30 @@ export const getCachedMatchInfos = async (
 	matchTimelines: TimelineDto[];
 }> => {
 	try {
-		// 1. 기존 캐시 데이터 로드 및 업데이트 시간 확인
-		const existingData = await loadExistingMatchData(puuid);
+		// 1. [1단계] 메타데이터만 가볍게 로드하여 캐시 유효성 검사
+		const existingData = await loadExistingMatchMetadata(puuid);
 		const fifteenMinutes = 15 * 60 * 1000;
+
 		if (
 			existingData.lastUpdated &&
-			new Date().getTime() - new Date(existingData.lastUpdated).getTime() <
-				fifteenMinutes
+			new Date().getTime() - existingData.lastUpdated.getTime() < fifteenMinutes
 		) {
-			return {
-				matchInfos: existingData.matchInfos,
-				matchTimelines: existingData.matchInfoTimeline,
-			};
+			console.log("15분 내 업데이트됨. DB에서 최종 데이터를 바로 로드합니다.");
+			// [2단계] 캐시가 유효하면 DB에서 전체 데이터를 가져와 즉시 반환
+			return await loadAllMatchDataFromDB(puuid, requestCount);
 		}
 
-		// 2. 최신 매치 ID 목록 가져오기
+		// 2. 최신 매치 ID 목록 가져오기 (API 호출)
 		const allMatchIds = await getMatchList({ puuid, count: requestCount });
-		await delay(1200); // API 호출 후 잠시 대기
+		await delay(1200);
 
 		const newMatchIds = allMatchIds.filter(
 			(id) => !existingData.matchIds.has(id),
 		);
 
 		if (newMatchIds.length === 0) {
-			return {
-				matchInfos: existingData.matchInfos,
-				matchTimelines: existingData.matchInfoTimeline,
-			};
+			console.log("새로운 매치가 없습니다. DB에서 기존 데이터를 로드합니다.");
+			return await loadAllMatchDataFromDB(puuid, requestCount);
 		}
 
 		// 3. 새로운 매치 정보들을 '하나의 루프'에서 순차적으로 가져오기 (핵심 변경사항)
@@ -227,92 +219,96 @@ export const getCachedMatchInfos = async (
 			}
 		}
 
-		// 4. 새 데이터를 DB 형식에 맞게 변환하고 저장
-		const newMatches = newMatchInfosArr.map((info) => ({
-			matchId: info.metadata.matchId,
-			matchInfo: info,
-		}));
-		const newTimelines = newTimelinesArr.map((timeline) => ({
-			matchId: timeline.metadata.matchId,
-			matchInfo: timeline,
-		}));
-
-		if (newMatches.length > 0) {
-			await saveNewMatchInfos(puuid, newMatches, newTimelines);
+		// 4. [수정] 새로운 매치 데이터들을 DB에 저장
+		if (newMatchInfosArr.length > 0) {
+			console.log(
+				`[4] ${newMatchInfosArr.length}개의 새로운 매치를 DB에 저장합니다.`,
+			);
+			// 위에서 만든 저장 함수 호출
+			await saveNewMatchesToDB(puuid, newMatchInfosArr, newTimelinesArr);
 		}
 
-		// 5. 기존 데이터와 새 데이터를 합쳐서 반환
-		const combinedInfos = [
-			...existingData.matchInfos,
-			...newMatchInfosArr,
-		].sort((a, b) => b.info.gameCreation - a.info.gameCreation);
-
-		const combinedTimelines = [
-			...existingData.matchInfoTimeline,
-			...newTimelines.map((t) => t.matchInfo),
-		].sort(
-			(a, b) => b.metadata.matchId.localeCompare(a.metadata.matchId), // matchId 기준 혹은 timestamp 기준으로 정렬
+		// 5. [수정] DB에서 최종 데이터를 로드하여 반환 (메모리 조합 로직 삭제!)
+		console.log(
+			"[5] 모든 작업을 마치고 DB에서 최종 데이터를 일관성 있게 로드합니다.",
 		);
-
-		return {
-			matchInfos: combinedInfos,
-			matchTimelines: combinedTimelines,
-		};
+		return await loadAllMatchDataFromDB(puuid, requestCount);
 	} catch (error) {
 		console.error("getCachedMatchInfos 전역 에러:", error);
 		throw error;
 	}
 };
 
-// 추가 유틸리티 함수들
-
 /**
- * 특정 플레이어의 모든 매치 캐시를 삭제
+ * [최적화 1단계] DB에서 캐시된 매치의 메타데이터만 로드 (가벼운 쿼리)
+ * - match_id와 game_creation 컬럼만 선택적으로 가져와 초기 확인 속도를 높임.
+ *
  * @param puuid 플레이어의 고유 식별자
+ * @returns 캐시된 매치 ID Set과 마지막 업데이트 시간
  */
-export const clearMatchCache = async (puuid: string): Promise<void> => {
-	const { error } = await supabase
+const loadExistingMatchMetadata = async (
+	puuid: string,
+): Promise<{
+	matchIds: Set<string>;
+	lastUpdated: Date | null;
+}> => {
+	// 필요한 최소한의 컬럼만 select
+	const { data: records, error } = await supabase
 		.from("match_cache")
-		.delete()
+		.select("match_id, game_creation") // 사용자가 명시한 컬럼명 사용
 		.eq("puuid", puuid);
 
 	if (error) {
-		console.error("매치 캐시 삭제 실패:", error);
-		throw new Error(`매치 캐시 삭제 실패: ${error.message}`);
+		console.error("매치 메타데이터 로드 실패:", error);
+		return { matchIds: new Set(), lastUpdated: null };
 	}
+
+	if (!records || records.length === 0) {
+		return { matchIds: new Set(), lastUpdated: null };
+	}
+
+	// 가장 최근 게임 생성 시간을 기준으로 lastUpdated 설정
+	const lastGameCreation = records.reduce(
+		(max, r) => Math.max(max, new Date(r.game_creation).getTime()),
+		0,
+	);
+
+	return {
+		matchIds: new Set(records.map((r) => r.match_id)),
+		lastUpdated: new Date(lastGameCreation),
+	};
 };
 
 /**
- * 특정 플레이어의 매치 캐시 통계 정보를 가져옴
- * @param puuid 플레이어의 고유 식별자
- * @returns 총 매치 수, 가장 오래된 매치, 가장 최신 매치 정보
+ * [최적화 2단계] DB에서 캐시된 모든 매치 정보를 로드 (무거운 쿼리)
+ * - 최종적으로 사용자에게 반환할 때 사용.
+ *
+ * @param puuid 플레이어 고유 식별자
+ * @param limit 가져올 개수
+ * @returns DB에 저장된 매치 정보와 타임라인
  */
-export const getMatchCacheStats = async (
+const loadAllMatchDataFromDB = async (
 	puuid: string,
+	limit: number,
 ): Promise<{
-	totalMatches: number;
-	oldestMatch: string | null;
-	newestMatch: string | null;
+	matchInfos: MatchInfoResponse[];
+	matchTimelines: TimelineDto[];
 }> => {
-	const { data: records, error } = await supabase
+	const { data, error } = await supabase
 		.from("match_cache")
-		.select("game_creation")
+		.select("match_info, match_info_timeline") // 실제 데이터가 담긴 JSON 컬럼
 		.eq("puuid", puuid)
-		.order("game_creation", { ascending: false });
+		.order("game_creation", { ascending: false })
+		.limit(limit);
 
-	if (error || !records) {
-		return { totalMatches: 0, oldestMatch: null, newestMatch: null };
+	if (error) {
+		console.error("DB에서 전체 매치 데이터 로드 실패:", error);
+		return { matchInfos: [], matchTimelines: [] };
 	}
 
+	// DB의 match_info, match_info_timeline 컬럼이 실제 API 응답 타입과 일치한다고 가정
 	return {
-		totalMatches: records.length,
-		oldestMatch:
-			records.length > 0
-				? new Date(records[records.length - 1].game_creation).toISOString()
-				: null,
-		newestMatch:
-			records.length > 0
-				? new Date(records[0].game_creation).toISOString()
-				: null,
+		matchInfos: data?.map((item) => item.match_info) || [],
+		matchTimelines: data?.map((item) => item.match_info_timeline) || [],
 	};
 };
