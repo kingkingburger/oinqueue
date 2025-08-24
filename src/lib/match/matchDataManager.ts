@@ -210,7 +210,7 @@ const saveNewMatchesToDB = async (
 			match_id: matchId,
 			match_info: info, // 'match_info' 컬럼에 JSON으로 저장
 			match_info_timeline: timeline, // 'match_info_timeline' 컬럼에 JSON으로 저장
-			game_creation: new Date(info.info.gameCreation), // 정렬을 위한 시간 정보
+			game_creation: info.info.gameCreation, // 정렬을 위한 시간 정보
 		};
 	});
 
